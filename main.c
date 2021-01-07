@@ -16,14 +16,19 @@ int main(int argc, char **argv){
             ";",
             "packets", dt_bindata, "len", "void_ptr",
             "future_value", dt_null,
+            "some_object",
+                "some_other_object", 
+                ";",
+            ";",
         ";"
     ); 
 
-    double *value4 = doc_get_member(obj, "pontos", "p2");
+    double *value1 = doc_get_member(obj, ".max");
+    double *value2 = doc_get_member(obj, "pontos.p2");
 
     // double *value4 = doc_set_member(obj, "pontos", "p2");
 
-    doc_add_member(obj,
+    doc_add_member(obj, "some_object.some_other_object",
         "uid", dt_const_string, "v-1234-4321"
     );
 

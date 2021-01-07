@@ -3,9 +3,23 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <string.h>
-#include "static_assert/static_assert.h"
 
 /* ----------------------------------------- Private Functions ------------------------------ */
+
+int is_name_duplicate(doc *obj_or_array, char *name){
+    doc *cursor = obj_or_array->child;
+    if(cursor == NULL)
+        return -1; // empty object
+
+    do{
+        if(!strcmp(cursor->name, name))
+            return 1; // is duplicate
+
+        cursor = cursor->next;
+    }while(cursor != NULL);
+        
+    return 0;
+}
 
 doc *parse_doc_syntax(char *name, doc_type_t type, va_list arg_list){
 
@@ -51,6 +65,7 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list arg_list){
 
             // read next arg
             member_name = va_arg(arg_list, char*);
+            assert(!is_name_duplicate(variable, member_name) && "Member_name_already_exists!");
             member_type = va_arg(arg_list,doc_type_t);
             assert(IS_DOC_TYPE(member_type) && "Type_provided_is_not_an_actual_type!");
             
@@ -65,6 +80,7 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list arg_list){
 
                 // read next
                 member_name = va_arg(arg_list, char*);
+                assert(!is_name_duplicate(variable, member_name) && "Member_name_already_exists!");
                 member_type = va_arg(arg_list,doc_type_t);
                 assert(IS_DOC_TYPE(member_type) && "Type_provided_is_not_an_actual_type!");
                 // if the object is an array, assert so that all members have the same type, for correctness
@@ -251,11 +267,19 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list arg_list){
     return return_var;
 }
 
-void delete_doc(doc *variable){
+void free_doc(doc *variable){
     switch(variable->type){
         case dt_obj:
         case dt_array:
+            doc *cursor = variable->child;
 
+            do{
+                cursor = cursor->next;
+                free_doc(cursor->prev);
+            }while(cursor->next != NULL);
+
+            free_doc(cursor);
+            free(variable);
         break;
 
         case dt_null:
@@ -283,14 +307,48 @@ void delete_doc(doc *variable){
         
         case dt_const_string:
         case dt_const_bindata:
-
+            free(variable);
         break;
     }
 }
 
+doc *get_variable_ptr(doc *object_or_array, char *path){
+    // to see if it contains at least one member
+    doc *cursor = object_or_array->child;
+    if(cursor == NULL)
+        return NULL;
+
+    // the element itself
+    if(!strcmp(path,"."))
+        return object_or_array;
+
+    // jump over optional '.' at the beginning of path
+    if(path[0] == '.'){ path++; }
+    char *var_name = path;
+    char *var_name_next = strpbrk(var_name, ".");
+
+    // end of string 'path'
+    if(var_name_next == NULL)
+        return NULL;
+        
+    var_name_next[0] = '\0'; // make the first name acessible directly
+    var_name_next++; // points to other name
+
+    do{
+        if(!strcmp(cursor->name,var_name)){
+            doc *sub_var = get_variable_ptr(cursor, var_name_next); 
+            return sub_var;
+        }
+
+        cursor = cursor->next;
+    }while(cursor != NULL);
+
+    return NULL;
+}
+
 /* ----------------------------------------- Functions -------------------------------------- */
 
-doc *doc_new_onstack(char *name, doc_type_t type, ...){
+doc *doc_new(char *name, doc_type_t type, ...){
     va_list args;
     va_start(args, type);
 
@@ -301,31 +359,143 @@ doc *doc_new_onstack(char *name, doc_type_t type, ...){
     return variable;
 }
 
-void doc_add_member(doc *obj_or_array, char *name, doc_type_t type, ...){
+void doc_add_member(doc *object_or_array, char *name, doc_type_t type, ...){
+    // copy for use in tokenization (destructive)
+    char *name_cpy = malloc(strlen(name)+1);
+    strcpy(name_cpy, name);
+
+    doc *variable = get_variable_ptr(object_or_array, name_cpy);
+
+    free(name_cpy);
+    
+    if(variable == NULL)
+        return;
+
+
     va_list args;
     va_start(args, type);
 
-    doc *variable = parse_doc_syntax(name, type, args);
-
-    doc *cursor = obj_or_array->child;
-
-    while(cursor->next != NULL)
-        cursor = cursor->next;
-
-    cursor->next = variable;
-    variable->prev = cursor;
-
+    doc *new_variable = parse_doc_syntax(name, type, args);
     va_end(args);
-}
 
-void doc_remove_member(doc *object_or_array, char *name){
-    doc *cursor = object_or_array->child;
+    if(variable->child == NULL){
+        variable->child = new_variable;
+    }
+    else{
+        while(variable->next != NULL)
+            variable = variable->next;
 
-    while(cursor->next != NULL){
-        if(!strcmp(name,cursor->name)){
-            
-        }
+        variable->next = new_variable;
+        new_variable->prev = variable;
     }
 
     return;
+}
+
+void doc_delete(doc *object_or_array, char *name){
+    // copy for use in tokenization (destructive)
+    char *name_cpy = malloc(strlen(name)+1);
+    strcpy(name_cpy, name);
+
+    // eliminate the last name to get parent path
+    char *parent_path = strpbrk(name_cpy, "\0");
+    while(parent_path[0] != '.'){ parent_path--; }
+    parent_path[0] = '\0';
+    parent_path++;
+
+    doc *variable = get_variable_ptr(object_or_array, name_cpy);
+    doc *variable_parent = get_variable_ptr(object_or_array, name_cpy);
+
+    free(name_cpy);
+    
+    // if its child, then its part of an array
+    if(variable_parent != NULL){
+        // if it is the first child
+        if(variable_parent->child == variable){
+            variable_parent->child = variable->next;
+            variable->next->prev = NULL;
+        }
+        // last element
+        else if(variable->next == NULL){ 
+            variable->prev->next = NULL; // make previous element next pointer NULL
+        }
+        // middle element
+        else{ 
+            variable->prev->next = variable->next; // makes the previous element points to next
+            variable->next->prev = variable->prev; // makes the next element points to the previous
+        }
+    }    
+
+    free_doc(variable);
+    return;
+
+    return;
+}
+
+void doc_modify_member(doc *object_or_array, char *name, char *new_name, doc_type_t new_type, ...){
+    va_list args;
+    va_start(args, new_type);
+
+    // check to see if doc* is obj/array
+    if(object_or_array->type != dt_obj || object_or_array->type != dt_array)
+        return;
+
+    // copy for use in tokenization (destructive)
+    char *name_cpy = malloc(strlen(name)+1);
+    strcpy(name_cpy, name);
+
+    doc *variable = get_variable_ptr(object_or_array, name_cpy);
+
+    free(name_cpy);
+
+    doc *new_variable = parse_doc_syntax(new_name, new_type, args);
+
+    variable->prev->next = new_variable;
+    variable->next->prev = new_variable;
+
+    free_doc(variable);
+
+    return;
+}
+
+void *doc_get_member_value(doc* object_or_array, char *name){
+    // check to see if doc* is obj/array
+    if(object_or_array->type != dt_obj || object_or_array->type != dt_array)
+        return NULL;
+
+    // copy for use in tokenization (destructive)
+    char *name_cpy = malloc(strlen(name)+1);
+    strcpy(name_cpy, name);
+
+    doc *variable = get_variable_ptr(object_or_array, name_cpy);
+
+    free(name_cpy);
+
+    switch(variable->type){
+        case dt_null:
+            return NULL;
+        break;
+
+        case dt_obj:
+        case dt_array:
+            return NULL;
+        break;
+        
+        case dt_const_bindata:
+        case dt_bindata:
+        case dt_const_string:
+        case dt_string:
+            return &(((doc_bin_data*)variable)->data);
+        break;
+
+        default:
+            return &(((doc_int*)variable)->value);
+        break;
+    }
+}
+
+void *doc_get_stream_len(void *value){
+    uint8_t *data_ptr = value;
+    data_ptr -= sizeof(size_t); // subtract the size_t so that it points to the stream len, see doc_string and doc_bin_data datatypes onto c_doc.h    
+    return (void*)data_ptr;
 }
