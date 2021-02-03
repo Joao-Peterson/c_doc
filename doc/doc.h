@@ -7,7 +7,11 @@
 
 /* ----------------------------------------- Definitions ------------------------------------ */
 
-#define ERROR_MSG_LEN_DOC_HEADER 500
+#define ERROR_MSG_LEN_DOC_HEADER    500     // max string len for error msg, used by doc_get_error_msg()
+
+#define DOC_NAME_MAX_LEN            100     // max name length for doc instance
+
+#define MAX_OBJ_MEMBER_QTY          5000    // maximum quantity of members inside a array or object  
 
 /* ----------------------------------------- Enum's ----------------------------------------- */
 
@@ -192,7 +196,9 @@ typedef struct{
 
 /* ----------------------------------------- Prototypes ------------------------------------- */
 
-int _MACRO_WANNABE_doc_get_error_code(void);
+int __doc_get_error_code(void);
+
+doc *__check_obj(doc *obj); 
 
 char *doc_get_error_msg(void);
 
@@ -206,18 +212,36 @@ void doc_modify_member(doc *object_or_array, char *name, char *new_name, doc_typ
 
 doc *doc_get(doc* object_or_array, char *name);
 
+void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len);
+
+void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
+
 /* ----------------------------------------- Macros ----------------------------------------- */
 
-#define doc_get_value(obj, type)    (((doc_##type*)obj)->value)
+#define doc_get_value(obj, type)    (((doc_##type*)__check_obj(obj))->value)
 
-#define doc_get_string(obj)         (   (obj->type == dt_string) ? (char*)(((doc_string*)obj)->string) : (const char*)(((doc_string*)obj)->string)   )
+#define doc_get_string(obj)         (   (__check_obj(obj)->type == dt_string) ? (char*)(((doc_string*)__check_obj(obj))->string) : (const char*)(((doc_string*)__check_obj(obj))->string)   )
 
-#define doc_get_string_len(obj)     (((doc_string*)obj)->len)
+#define doc_get_string_len(obj)     (((doc_string*)__check_obj(obj))->len)
 
-#define doc_get_bindata(obj)        (   (obj->type == dt_bindata) ? (uint8_t*)(((doc_bindata*)obj)->data) : (const uint8_t*)(((doc_bindata*)obj)->data)   )
+#define doc_get_bindata(obj)        (   (__check_obj(obj)->type == dt_bindata) ? (uint8_t*)(((doc_bindata*)__check_obj(obj))->data) : (const uint8_t*)(((doc_bindata*)__check_obj(obj))->data)   )
 
-#define doc_get_bindata_len(obj)    (((doc_bindata*)obj)->len)
+#define doc_get_bindata_len(obj)    (((doc_bindata*)__check_obj(obj))->len)
 
-#define doc_error_code (_MACRO_WANNABE_doc_get_error_code())
+#define doc_error_code (__doc_get_error_code())
+
+// from internal doc.c
+doc *get_variable_ptr(doc *object_or_array, char *path);
+#define doc_set_value(obj, name, type, new_value)           ( ((doc_##type*)get_variable_ptr(__check_obj(obj),name))->value = new_value )
+
+// #define doc_set_string(obj, name, new_string, new_len)      ({              \
+//     ((doc_string*)get_variable_ptr(obj,name))->string = new_string;         \
+//     ((doc_string*)get_variable_ptr(obj,name))->len = new_len;               \
+// })
+
+// #define doc_set_bindata(obj, name, new_data, new_len)       ({              \
+//     ((doc_bindata*)get_variable_ptr(obj,name))->data = new_data;            \
+//     ((doc_bindata*)get_variable_ptr(obj,name))->len = new_len;              \
+// })
 
 #endif

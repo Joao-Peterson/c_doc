@@ -22,6 +22,11 @@ int main(int argc, char **argv){
         ";"
     ); 
 
+    if(obj == NULL){
+        printf("Error: %s",doc_get_error_msg());
+        return -1;
+    }
+
     doc_add(obj, ".", 
         "medidas", dt_obj,
             "m1", dt_const_string, "bruh", 5,
@@ -30,22 +35,19 @@ int main(int argc, char **argv){
         ";"
     );
 
-    doc *ptr = doc_get(obj, "medidas.M1");
-    printf("GET: %s\n", doc_get_error_msg());
+    doc *ptr = doc_get(obj, "pontos.p3");
 
-    uint32_t value = doc_get_value(ptr, uint32_t); 
-    printf("Value: %u\n", value);
+    double value = doc_get_value(ptr, double); 
 
-    doc_delete(obj,"medidas.M1");
+    printf("Value before: %f.\n", value);
 
-    ptr = doc_get(obj, "medidas.M1");
-    printf("GET: %s\n", doc_get_error_msg());
+    doc_set_value(obj, "pontos.p3", double, 130.0);
 
-    ptr = doc_get(obj, "medidas.21");
-    if(doc_error_code < 0)
-        printf("GET: %s [%i]\n", doc_get_error_msg(), doc_error_code);
+    value = doc_get_value(ptr, double); 
+
+    printf("Value before: %f.\n", value);
 
     doc_delete(obj,".");
 
     return 0;
-}
+}   
