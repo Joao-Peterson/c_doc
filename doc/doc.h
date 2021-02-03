@@ -1,9 +1,13 @@
-#ifndef _C_DOC_
-#define _C_DOC_
+#ifndef _DOC_HEADER_
+#define _DOC_HEADER_
 
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+/* ----------------------------------------- Definitions ------------------------------------ */
+
+#define ERROR_MSG_LEN_DOC_HEADER 500
 
 /* ----------------------------------------- Enum's ----------------------------------------- */
 
@@ -67,6 +71,7 @@ struct doc{
     doc *next;
     doc *prev;
     doc *child;
+    doc *parent;
     doc_type_t type;
     char *name;
 };
@@ -97,7 +102,7 @@ typedef struct{
         unsigned int value;
         uint8_t bytes[sizeof(unsigned int)];
     };
-}doc_uint;
+}doc_uint_t;
 
 typedef struct{
     doc header;
@@ -105,7 +110,7 @@ typedef struct{
         uint64_t value;
         uint8_t bytes[sizeof(uint64_t)];
     };
-}doc_uint64;
+}doc_uint64_t;
 
 typedef struct{
     doc header;
@@ -113,7 +118,7 @@ typedef struct{
         uint32_t value;
         uint8_t bytes[sizeof(uint32_t)];
     };
-}doc_uint32;
+}doc_uint32_t;
 
 typedef struct{
     doc header;
@@ -121,12 +126,12 @@ typedef struct{
         uint16_t value;
         uint8_t bytes[sizeof(uint16_t)];
     };
-}doc_uint16;
+}doc_uint16_t;
 
 typedef struct{
     doc header;
     uint8_t value;
-}doc_uint8;
+}doc_uint8_t;
 
 
 typedef struct{
@@ -135,7 +140,7 @@ typedef struct{
         int value;
         uint8_t bytes[sizeof(int)];
     };
-}doc_int;
+}doc_int_t;
 
 typedef struct{
     doc header;
@@ -143,7 +148,7 @@ typedef struct{
         int64_t value;
         uint8_t bytes[sizeof(int64_t)];
     };
-}doc_int64;
+}doc_int64_t;
 
 typedef struct{
     doc header;
@@ -151,7 +156,7 @@ typedef struct{
         int32_t value;
         uint8_t bytes[sizeof(int32_t)];
     };
-}doc_int32;
+}doc_int32_t;
 
 typedef struct{
     doc header;
@@ -159,12 +164,12 @@ typedef struct{
         int16_t value;
         uint8_t bytes[sizeof(int16_t)];
     };
-}doc_int16;
+}doc_int16_t;
 
 typedef struct{
     doc header;
     int8_t value;
-}doc_int8;
+}doc_int8_t;
 
 typedef struct{
     doc header;
@@ -181,12 +186,38 @@ typedef struct{
     doc header;
     size_t len;
     uint8_t *data;
-}doc_bin_data;
+}doc_bindata;
 
 #pragma (pop)
 
 /* ----------------------------------------- Prototypes ------------------------------------- */
 
+int _MACRO_WANNABE_doc_get_error_code(void);
 
+char *doc_get_error_msg(void);
+
+doc *doc_new(char *name, doc_type_t type, ...);
+
+void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t type, ...);
+
+void doc_delete(doc *object_or_array, char *name);
+
+void doc_modify_member(doc *object_or_array, char *name, char *new_name, doc_type_t new_type, ...);
+
+doc *doc_get(doc* object_or_array, char *name);
+
+/* ----------------------------------------- Macros ----------------------------------------- */
+
+#define doc_get_value(obj, type)    (((doc_##type*)obj)->value)
+
+#define doc_get_string(obj)         (   (obj->type == dt_string) ? (char*)(((doc_string*)obj)->string) : (const char*)(((doc_string*)obj)->string)   )
+
+#define doc_get_string_len(obj)     (((doc_string*)obj)->len)
+
+#define doc_get_bindata(obj)        (   (obj->type == dt_bindata) ? (uint8_t*)(((doc_bindata*)obj)->data) : (const uint8_t*)(((doc_bindata*)obj)->data)   )
+
+#define doc_get_bindata_len(obj)    (((doc_bindata*)obj)->len)
+
+#define doc_error_code (_MACRO_WANNABE_doc_get_error_code())
 
 #endif
