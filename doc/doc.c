@@ -1,3 +1,18 @@
+/**
+ * @file doc.c
+ * 
+ * DOC - The C dynamic object lib!
+ * 
+ * This library is made for C and C++ programs and implement a data structure to mimic dynamic objects
+ * present in interpreted languages, parsers can be written to convert files notations such as xml, json, etc, to
+ * the data structure.
+ * 
+ * Created by: João Peterson Scheffer - 2021.
+ * 
+ * This is the source file, please don't modify, except when stated in documentation.
+ * 
+ */
+
 #include "doc.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -401,6 +416,7 @@ int __doc_get_error_code(void){
     return errno_doc_code_internal;
 }
 
+// get error msg
 char *doc_get_error_msg(void){
     char *message = malloc(ERROR_MSG_LEN_DOC_HEADER);
     message[ERROR_MSG_LEN_DOC_HEADER] = '\0';
@@ -433,6 +449,7 @@ char *doc_get_error_msg(void){
     return message;
 }
 
+// create new object
 doc *doc_new(char *name, doc_type_t type, ...){
     va_list args;
     va_start(args, type);
@@ -444,6 +461,7 @@ doc *doc_new(char *name, doc_type_t type, ...){
     return variable;
 }
 
+// add new elements syntax to existing element
 void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t type, ...){
 
     doc *variable = get_variable_ptr(object_or_array, name_to_add_to);              // get instance from name
@@ -476,6 +494,7 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
     return;
 }
 
+// delete element denote by 'name'
 void doc_delete(doc *object_or_array, char *name){
     
     doc *variable = get_variable_ptr(object_or_array, name);                    // get pointer to instance
@@ -531,6 +550,7 @@ void doc_delete(doc *object_or_array, char *name){
     errno_doc_code_internal = errno_doc_ok;
 }
 
+// get pointer to element
 doc* doc_get(doc* object_or_array, char *name){
     // check to see if doc* is obj/array
     if(object_or_array->type != dt_obj && object_or_array->type != dt_array){
@@ -551,15 +571,23 @@ doc* doc_get(doc* object_or_array, char *name){
     return variable;
 }
 
+// set string pointer and length
 void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len){
     ((doc_string*)get_variable_ptr(obj,name))->string = new_string;         
     ((doc_string*)get_variable_ptr(obj,name))->len = new_len; 
     errno_doc_code_internal = errno_doc_ok;
 }
 
+// set bindata pointer and length
 void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len){
     ((doc_bindata*)get_variable_ptr(obj,name))->data = new_data;            
     ((doc_bindata*)get_variable_ptr(obj,name))->len = new_len;
     errno_doc_code_internal = errno_doc_ok;
 }
 
+/**
+ * TODO:
+ * only allow to add new data to array or object, throw error
+ * add should accept a single non obj or array value,
+ * deallocate old string and bindata when setting new value
+ */

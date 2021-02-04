@@ -4,6 +4,7 @@
 
 int main(int argc, char **argv){
 
+    // new dynamic object
     doc *obj = doc_new(
         "velocidades", dt_obj,
             "max", dt_double, 56.0,
@@ -22,11 +23,13 @@ int main(int argc, char **argv){
         ";"
     ); 
 
-    if(obj == NULL){
+    // error handling
+    if(doc_error_code){
         printf("Error: %s",doc_get_error_msg());
         return -1;
     }
 
+    // add to existing
     doc_add(obj, ".", 
         "medidas", dt_obj,
             "m1", dt_const_string, "bruh", 5,
@@ -35,18 +38,22 @@ int main(int argc, char **argv){
         ";"
     );
 
+    // get pointer to a member on dynamic object
     doc *ptr = doc_get(obj, "pontos.p3");
 
+    // retrive
     double value = doc_get_value(ptr, double); 
 
     printf("Value before: %f.\n", value);
 
+    // alter member value
     doc_set_value(obj, "pontos.p3", double, 130.0);
 
     value = doc_get_value(ptr, double); 
 
     printf("Value before: %f.\n", value);
 
+    // delete all, but can be any instance
     doc_delete(obj,".");
 
     return 0;
