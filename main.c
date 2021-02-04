@@ -24,7 +24,7 @@ int main(int argc, char **argv){
     ); 
 
     // error handling
-    if(doc_error_code){
+    if(doc_error_code < 0){
         printf("Error: %s",doc_get_error_msg());
         return -1;
     }
@@ -51,7 +51,33 @@ int main(int argc, char **argv){
 
     value = doc_get_value(ptr, double); 
 
-    printf("Value before: %f.\n", value);
+    printf("Value after: %f.\n", value);
+
+    // CHECKS
+
+    // check set_string on non string
+    doc_set_string(obj, "integer", "bruhhhh", 8);
+    printf("Error: %s\n",doc_get_error_msg());
+
+    // check set_bindata on non bindata
+    doc_set_bindata(obj, "integer", "bruhhhh", 8);
+    printf("Error: %s\n",doc_get_error_msg());
+
+    // check set_value on non value obj
+    doc_set_value(obj, "future_value", double, 255.8);
+    printf("Error: %s\n",doc_get_error_msg());
+
+    // check add of a single value
+    doc_add(obj, "pontos", "p5", dt_double, 50.0);
+    printf("Error: %s\n",doc_get_error_msg());
+
+    // check add on non addable objects
+    doc_add(obj, "pontos", "p5", dt_double, 50.0);
+    printf("Error: %s\n",doc_get_error_msg());
+
+    // check add value on array, with different type
+    doc_add(obj, "pontos", "p6", dt_int, 64);
+    printf("Error: %s\n",doc_get_error_msg());
 
     // delete all, but can be any instance
     doc_delete(obj,".");

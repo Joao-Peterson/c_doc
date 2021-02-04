@@ -259,6 +259,22 @@ typedef struct{
 /* ----------------------------------------- Prototypes ------------------------------------- */
 
 /**
+ * @brief check if obj is null, if it is, returns a dummy doc 
+ * to be written to by some macros that would segfault on a null pointer
+ * @param obj: pointer to doc
+ * @return the object itself or a dummy in case obj is null
+ */
+doc *__check_obj(doc *obj); 
+
+/**
+ * @brief check if obj is null and if it is a value type, if it is, returns a dummy doc 
+ * to be written to by some macros that would segfault on a null pointer
+ * @param obj: pointer to doc
+ * @return the object itself or a dummy in case obj is null or non value type
+ */
+doc *__check_obj_is_value(doc *obj);
+
+/**
  * @brief internal function, visible only for macro porpouses
  * @return error code defined by 'errno_doc_code_t' in 'doc.c'
  */
@@ -269,14 +285,6 @@ int __doc_get_error_code(void);
  * @return string with the error message
  */
 char *doc_get_error_msg(void);
-
-/**
- * @brief check if obj is null, if it is, returns a dummy doc 
- * to be written to by some macros that would segfault on a null pointer
- * @param obj: pointer to doc
- * @return the object itself or a dummy in case obj is null
- */
-doc *__check_obj(doc *obj); 
 
 /**
  * @brief creates a new object based on the lib syntax
@@ -381,6 +389,6 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param type: type of the data, C keyword types
  * @param new_value: value to be set
  */
-#define doc_set_value(obj, name, type, new_value)  ( ((doc_##type*)doc_get(__check_obj(obj),name))->value = new_value )
+#define doc_set_value(obj, name, type, new_value)  ( ((doc_##type*)__check_obj_is_value(doc_get(__check_obj(obj),name)))->value = new_value )
 
 #endif

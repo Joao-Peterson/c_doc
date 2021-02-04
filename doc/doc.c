@@ -35,7 +35,11 @@ typedef enum{
     errno_doc_duplicate_names                                                       = -4,
     errno_doc_null_passed_obj                                                       = -5,
     errno_doc_obj_not_found                                                         = -6,
-    errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator    = -7
+    errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator    = -7,
+    errno_doc_trying_to_add_new_data_to_non_object_or_non_array                     = -8,
+    errno_doc_trying_to_set_value_of_non_value_type_data_type                       = -9,
+    errno_doc_trying_to_set_string_of_non_string_data_type                          = -10,
+    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                        = -11
 }errno_doc_code_t;
 
 /* ----------------------------------------- Private Struct's --------------------------------- */
@@ -49,7 +53,7 @@ typedef struct{
 /* ----------------------------------------- Private Globals -------------------------------- */
 
 // dummy instance to receive macros operations, to not generate segfault
-doc_uint64_t dummy_doc_internal;
+doc_uint64_t dummy_doc_internal = { .value = 0xFFFFFFFFFFFFFFFF, .header = { .name = "dummy", .type = dt_null, .parent = NULL, .child = NULL, .next = NULL, .prev = NULL, } };
 doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
 
 // ilegal ascii characters on names
@@ -69,7 +73,11 @@ const errno_doc_t errno_doc_msg_code_array[] = {
     ERR_TO_STRUCT(errno_doc_duplicate_names),
     ERR_TO_STRUCT(errno_doc_null_passed_obj),
     ERR_TO_STRUCT(errno_doc_obj_not_found),
-    ERR_TO_STRUCT(errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator)
+    ERR_TO_STRUCT(errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator),
+    ERR_TO_STRUCT(errno_doc_trying_to_add_new_data_to_non_object_or_non_array),
+    ERR_TO_STRUCT(errno_doc_trying_to_set_value_of_non_value_type_data_type),
+    ERR_TO_STRUCT(errno_doc_trying_to_set_string_of_non_string_data_type),
+    ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type)
 };
 
 /* ----------------------------------------- Private Functions ------------------------------ */
@@ -411,6 +419,19 @@ doc *__check_obj(doc *obj){
         return obj;
 }
 
+// check if obj if a value
+doc *__check_obj_is_value(doc *obj){
+    
+    if(obj->type >= dt_double && obj->type <= dt_bool){                             // all values are between dt_double and dt_boll
+        return obj;                                                                 // on the doc_type_t enum
+    }
+    else{
+        errno_doc_code_internal = errno_doc_trying_to_set_value_of_non_value_type_data_type;
+        errno_msg_doc_internal = obj->name;
+        return dummy_doc_internal_ptr;
+    }
+}
+
 // get error code 
 int __doc_get_error_code(void){
     return errno_doc_code_internal;
@@ -469,14 +490,27 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
     if(variable == NULL)                                                            // no instance of name found, return
         return;
 
+    if(variable->type != dt_obj && variable->type != dt_array){                     // check if it is an array or object
+        errno_doc_code_internal = errno_doc_trying_to_add_new_data_to_non_object_or_non_array;
+        errno_msg_doc_internal = name_to_add_to;
+        return;
+    }
+
     va_list args;
     va_start(args, type);
 
     doc *new_variable = parse_doc_syntax(name, type, &args);
-    if(new_variable == NULL)
-        return
 
     va_end(args);
+    
+    if(new_variable == NULL)
+        return;
+
+    if(variable->type == dt_array && variable->child != NULL && variable->child->type != new_variable->type){     
+        errno_doc_code_internal = errno_doc_value_not_same_type_as_array;           // check if array has a child already,
+        errno_msg_doc_internal = name_to_add_to;                                    // if so, new element must be of the same type
+        return;
+    }
 
     if(variable->child == NULL){
         variable->child = new_variable;
@@ -573,6 +607,17 @@ doc* doc_get(doc* object_or_array, char *name){
 
 // set string pointer and length
 void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len){
+
+    if(obj->type != dt_string && obj->type != dt_const_string){
+        errno_doc_code_internal = errno_doc_trying_to_set_string_of_non_string_data_type;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(obj->type != dt_const_string){                                               // deallocates non const string
+        free(((doc_string*)get_variable_ptr(obj,name))->string);
+    }
+
     ((doc_string*)get_variable_ptr(obj,name))->string = new_string;         
     ((doc_string*)get_variable_ptr(obj,name))->len = new_len; 
     errno_doc_code_internal = errno_doc_ok;
@@ -580,14 +625,19 @@ void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len){
 
 // set bindata pointer and length
 void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len){
+
+    if(obj->type != dt_bindata && obj->type != dt_const_bindata){
+        errno_doc_code_internal = errno_doc_trying_to_set_bindata_of_non_bindata_data_type;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(obj->type != dt_const_bindata){                                              // deallocates non const bindata
+        free(((doc_bindata*)get_variable_ptr(obj,name))->data);
+    }
+
     ((doc_bindata*)get_variable_ptr(obj,name))->data = new_data;            
     ((doc_bindata*)get_variable_ptr(obj,name))->len = new_len;
     errno_doc_code_internal = errno_doc_ok;
 }
 
-/**
- * TODO:
- * only allow to add new data to array or object, throw error
- * add should accept a single non obj or array value,
- * deallocate old string and bindata when setting new value
- */
