@@ -1,111 +1,46 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "doc/doc.h"
+#include "doc/doc_json.h"
+
+char *read_asci(const char *path){
+    FILE *file = fopen(path, "r"); //abre arquivo
+    if(file==NULL){ // verifica se ponteiro lido é nulo
+        printf("Arquivo nao encontrado ou invalido\n");
+        return NULL;
+    }
+
+    fseek(file,0,SEEK_END); // vai até o fim do file
+    int len = ftell(file); // pega tamanho
+    fseek(file,0,SEEK_SET); // volta ao inicio
+
+    char *buf = (char*)malloc(sizeof(char)*(len+1)); //aloca buffer com tamanho +1
+    fread(buf,sizeof(char),len,file); // lê para o buffer
+    buf[len]='\0'; // introduz fechamento de string
+
+    fclose(file);
+    return buf;
+}
 
 int main(int argc, char **argv){
 
-    // new dynamic object
-    doc *obj = doc_new(
-        "velocidades", dt_obj,
-            "max", dt_double, 56.0,
-            "media", dt_double, 22.5,
-            "pontos", dt_array,
-                "p1", dt_double, 23.0,        
-                "p2", dt_double, 70.0,        
-                "p3", dt_double, 104.3,        
-                "p4", dt_double, 22.0,
-            ";",
-            "integer", dt_uint8, 255,
-            "packets", dt_const_bindata, "void_ptr", 9,
-            "future_value", dt_null,
-            "some_object", dt_obj,
-            ";",
-            "matrix", dt_array, 
-                dt_array, 
-                    "1", dt_int, 11,
-                    "2", dt_int, 22,
-                    "3", dt_int, 33,
-                ";",
-            ";", 
-            "some_values", dt_array,
-                dt_uint8, 251,
-                dt_uint8, 252,
-                dt_uint8, 253,
-            ";",
-        ";"
-    ); 
+    char *json_stream = read_asci("./test/types.json");
 
-    // error handling
+    doc *json_doc = doc_parse_json(json_stream);
+    
+    doc *value = doc_get(json_doc, "array_crazy_numbers[1]");
     if(doc_error_code < 0){
-        printf("Error: %s",doc_get_error_msg());
+        printf("Error: %s\n", doc_get_error_msg());
         return -1;
     }
 
-    // add to existing
-    doc_add(obj, ".", 
-        "medidas", dt_obj,
-            "m1", dt_const_string, "bruh", 5,
-            "M1", dt_uint32, 35420,
-            "data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
-        ";"
-    );
+    double rational_value = doc_get_value(value, double);
 
-    // get pointer to a member on dynamic object
-    doc *ptr = doc_get(obj, "pontos.p3");
+    printf("Value: [%.2f]", rational_value);
 
-    // retrive
-    double value = doc_get_value(ptr, double); 
+    doc_delete(json_doc, ".");
 
-    printf("Value before: %f.\n", value);
-
-    // alter member value
-    doc_set_value(obj, "pontos.p3", double, 130.0);
-
-    value = doc_get_value(ptr, double); 
-
-    printf("Value after: %f.\n", value);
-
-
-    // CHECKS
-
-    // check array get() on anonymous members
-    doc *array_member = doc_get(obj, "matrix[0][1]");
-    printf("Error_check: %s\n",doc_get_error_msg());
-    int member_value = doc_get_value(array_member, int);
-    printf("Value: [%u]. Error_check: %s\n", member_value, doc_get_error_msg());
-
-    // check [] notation on objs
-    doc *obj_member = doc_get(obj, "pontos[1]");
-    printf("Error_check: %s\n",doc_get_error_msg());
-    double point = doc_get_value(obj_member, double);
-    printf("Value: [%f]. Error_check: %s\n", point, doc_get_error_msg());
-
-    // check set_string on non string
-    doc_set_string(obj, "integer", "bruhhhh", 8);
-    printf("Error_check: %s\n",doc_get_error_msg());
-
-    // check set_bindata on non bindata
-    doc_set_bindata(obj, "integer", "bruhhhh", 8);
-    printf("Error_check: %s\n",doc_get_error_msg());
-
-    // check set_value on non value obj
-    doc_set_value(obj, "future_value", double, 255.8);
-    printf("Error_check: %s\n",doc_get_error_msg());
-
-    // check add of a single value
-    doc_add(obj, "pontos", "p5", dt_double, 50.0);
-    printf("Error_check: %s\n",doc_get_error_msg());
-
-    // check add on non addable objects
-    doc_add(obj, "pontos", "p5", dt_double, 50.0);
-    printf("Error_check: %s\n",doc_get_error_msg());
-
-    // check add value on array, with different type
-    doc_add(obj, "pontos", "p6", dt_int, 64);
-    printf("Error_check: %s\n",doc_get_error_msg());
-
-    // delete all, but can be any instance
-    doc_delete(obj,".");
+    free(json_stream);
 
     return 0;
 }   

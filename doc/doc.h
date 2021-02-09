@@ -367,7 +367,7 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param obj: pointer to the string instance
  * @return pointer to string
  */
-#define doc_get_string(obj)         (   (__check_obj(obj)->type == dt_string) ? (char*)(((doc_string*)__check_obj(obj))->string) : (const char*)(((doc_string*)__check_obj(obj))->string)   )
+#define doc_get_string(obj)         ( (((doc_string*)__check_obj(obj))->string) )
 
 /**
  * @brief gets the string len from a doc instance
