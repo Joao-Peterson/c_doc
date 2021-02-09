@@ -28,7 +28,13 @@
 
 #define DOC_NAME_MAX_LEN            100     // max name length for doc instance
 
-#define MAX_OBJ_MEMBER_QTY          5000    // maximum quantity of members inside a array or object  
+#define MAX_OBJ_MEMBER_QTY   UINT32_MAX     // maximum quantity of members inside a array or object  
+
+/* ----------------------------------------- Typedef's ---------------------------------------- */
+
+typedef uint32_t childs_amount_t;           // type for looping through members inside array's or obj's  
+
+typedef unsigned int uint_t;                // syntax sugar for getting the values with get_value() macro later
 
 /* ----------------------------------------- Enum's ----------------------------------------- */
 
@@ -94,6 +100,7 @@ struct doc{
     doc *prev;                              /**< pointer to previous member inside a array or object*/
     doc *child;                             /**< pointer to the first element of this array or object */
     doc *parent;                            /**< pointer to the parent, the instance that define the object or array */
+    childs_amount_t childs;                 /**< quantity of childs */
     doc_type_t type;                        /**< type that describes this instance */
     char *name;                             /**< name of the element */
 };
@@ -185,7 +192,7 @@ typedef struct{
         int value;                              /**< actual value */                                                
         uint8_t bytes[sizeof(int)];             /**< array of bytes of the value */                                                                
     };
-}doc_int_t;
+}doc_int;
 
 /**
  * @brief structure that inherit from doc that holds 'int64_t' data, typecasting from 'doc' to 'doc_int64_t' makes the data visible
@@ -319,6 +326,13 @@ void doc_delete(doc *object_or_array, char *name);
  * @return pointer to the element
  */
 doc *doc_get(doc* object_or_array, char *name);
+
+/**
+ * @brief get the amount of childs an array or obj has
+ * @param object_or_array: pointer to existing object
+ * @return amount of childs
+ */
+childs_amount_t doc_childs_amount(doc *object_or_array);
 
 /**
  * @brief set string data pointer and string len

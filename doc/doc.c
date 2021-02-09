@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 
@@ -58,7 +59,6 @@ doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
 
 // ilegal ascii characters on names
 const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,-.\\";
-// const char *illegal_chars_doc_name = "\1\2\3\4\5\6\a\b\t\n\v\f\r\14\15\16\17\18\19\20\21\22\23\24\25\26\27\28\29\30\31\32\"\37\'()*+,-.\\\127\128\129\130\131\132\133\134\135\136\137\138\139\140\141\142\143\144\145\146\147\148\149\150\151\152\153\154\155\156\157\158\159\160\161\162\163\164\165\166\167\168\169\170\171\172\173\174\175\176\177\178\179\180\181\182\183\184\185\186\187\188\189\190\191\192\193\194\195\196\197\198\199\200\201\202\203\204\205\206\207\208\209\210\211\212\213\214\215\216\217\218\219\220\221\222\223\224\225\226\227\228\229\230\231\232\233\234\235\236\237\238\239\240\241\242\243\244\245\246\247\248\249\250\251\252\253\254";
 
 // internal error vars, the char * one holds information about the name of instance to be acted on
 errno_doc_code_t errno_doc_code_internal = 0;
@@ -135,29 +135,47 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
             doc_type_t member_type;
             doc_type_t array_type_check;
 
-            for(int i = 0; true; i++){                                              // loop trought
-
+            for(childs_amount_t i = 0; true; i++){                                              // loop trought
 
                 member_name = va_arg(*arg_list, char *);                            // MEMBER NAME
 
-                if(i > MAX_OBJ_MEMBER_QTY || strlen(member_name) > DOC_NAME_MAX_LEN){
-                    errno_doc_code_internal = errno_doc_overflow_quantity_members_or_name_is_too_big;
-                    errno_msg_doc_internal = variable->name;
-                    return NULL;
+                doc_type_t name_check_for_type = *((doc_type_t*)&member_name);
+
+                if(variable->type == dt_array && IS_DOC_TYPE(name_check_for_type) ){      // in case of an array, members of type array and obj can have a null name  
+
+                    member_type = *((doc_type_t*)&member_name);                     // MEMBER TYPE
+                    member_name = malloc(sizeof(char*)*1);
+                    strncpy(member_name, "", 1);
+
                 }
+                else{
+                    
+                    size_t temp_size = strlen(member_name)+1;
+                    char *temp = malloc(sizeof(char)*temp_size);
+                    strncpy(temp, member_name, temp_size);
 
-                if(member_name[0] == ';')                                           // quit when terminator char found
-                    break;
+                    member_name = temp;
 
-                if(i != 0){                                                         // on all members execept the first
-                    if(is_name_duplicate(variable, member_name)){                  // check for duplicate names
-                        errno_doc_code_internal = errno_doc_duplicate_names;
-                        errno_msg_doc_internal = member_name;
+                    if(i > MAX_OBJ_MEMBER_QTY || strlen(member_name) > DOC_NAME_MAX_LEN){
+                        errno_doc_code_internal = errno_doc_overflow_quantity_members_or_name_is_too_big;
+                        errno_msg_doc_internal = variable->name;
                         return NULL;
                     }
-                }
 
-                member_type = va_arg(*arg_list, doc_type_t);                        // MEMBER TYPE
+                    if(member_name[0] == ';')                                       // quit when terminator char found
+                        break;
+
+                    if(i != 0){                                                     // on all members execept the first
+                        if(is_name_duplicate(variable, member_name)){               // check for duplicate names
+                            errno_doc_code_internal = errno_doc_duplicate_names;
+                            errno_msg_doc_internal = member_name;
+                            return NULL;
+                        }
+                    }
+
+                    member_type = va_arg(*arg_list, doc_type_t);                    // MEMBER TYPE
+
+                }
 
                 if(!IS_DOC_TYPE(member_type)){                                      // check type validity
                     errno_msg_doc_internal = member_name;
@@ -190,167 +208,104 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                 member->next = NULL;
                 member->parent = variable;
                 last_doc = member;
+                variable->childs = i;
             }
 
-        break;
-        
-        case dt_int:
-            variable = calloc(1,sizeof(doc_int_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_int_t*)variable)->value = va_arg(*arg_list, int); 
-        break;
-        
-        case dt_int64:
-            variable = calloc(1,sizeof(doc_int64_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_int64_t*)variable)->value = va_arg(*arg_list, int64_t); 
-        break;
-        
-        case dt_int32:
-            variable = calloc(1,sizeof(doc_int32_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_int32_t*)variable)->value = va_arg(*arg_list, int); 
-        break;
-        
-        case dt_int16:
-            variable = calloc(1,sizeof(doc_int16_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_int16_t*)variable)->value = va_arg(*arg_list, int); 
-        break;
-        
-        case dt_int8:
-            variable = calloc(1,sizeof(doc_int8_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_int8_t*)variable)->value = va_arg(*arg_list, int); 
-        break;
-        
-        case dt_uint:
-            variable = calloc(1,sizeof(doc_uint_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_uint_t*)variable)->value = va_arg(*arg_list, unsigned int); 
-        break;
-        
-        case dt_uint64:
-            variable = calloc(1,sizeof(doc_uint64_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_uint64_t*)variable)->value = va_arg(*arg_list, uint64_t); 
-        break;
-        
-        case dt_uint32:
-            variable = calloc(1,sizeof(doc_uint32_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_uint32_t*)variable)->value = va_arg(*arg_list, unsigned int); 
-        break;
-        
-        case dt_uint16:
-            variable = calloc(1,sizeof(doc_uint16_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_uint16_t*)variable)->value = va_arg(*arg_list, unsigned int); 
-        break;
-        
-        case dt_uint8:
-            variable = calloc(1,sizeof(doc_uint8_t));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_uint8_t*)variable)->value = va_arg(*arg_list, unsigned int); 
-        break;
+            variable->childs++;                                                     // one more because of loop for exit
 
-        case dt_bool:
-            variable = calloc(1,sizeof(doc_bool));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_bool*)variable)->value = va_arg(*arg_list, int); 
         break;
-
-        case dt_float:
-            variable = calloc(1,sizeof(doc_float));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            ((doc_float*)variable)->value = va_arg(*arg_list, double); 
-        break;
-
-        case dt_double:
-            variable = calloc(1,sizeof(doc_double));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            double deg = va_arg(*arg_list, double);
-            ((doc_double*)variable)->value = deg; 
-        break;
-
-        case dt_string:
-        case dt_const_string:
-        case dt_bindata:
-        case dt_const_bindata:
-            variable = calloc(1,sizeof(doc_bindata)); // for strings or bin_data, the allocation doesn't matter, just the type variable being of the correct type
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-            // order of assignement to len and data matters, should be the same as in the struct declaration
-            ((doc_bindata*)variable)->data = va_arg(*arg_list, uint8_t*); 
-            ((doc_bindata*)variable)->len  = va_arg(*arg_list, size_t); 
-        break;
-
-        case dt_null:
-            variable = calloc(1,sizeof(doc));
-            variable->name = name;
-            variable->type = type;
-            variable->child = NULL;
-            variable->prev = NULL;
-            variable->next = NULL;
-        break;
-
+        
         default:
-            // trown error
+            switch(type){
+
+                case dt_int:
+                    variable = calloc(1,sizeof(doc_int));
+                    ((doc_int*)variable)->value = va_arg(*arg_list, int); 
+                break;
+                
+                case dt_int64:
+                    variable = calloc(1,sizeof(doc_int64_t));
+                    ((doc_int64_t*)variable)->value = va_arg(*arg_list, int64_t); 
+                break;
+                
+                case dt_int32:
+                    variable = calloc(1,sizeof(doc_int32_t));
+                    ((doc_int32_t*)variable)->value = va_arg(*arg_list, int); 
+                break;
+                
+                case dt_int16:
+                    variable = calloc(1,sizeof(doc_int16_t));
+                    ((doc_int16_t*)variable)->value = va_arg(*arg_list, int); 
+                break;
+                
+                case dt_int8:
+                    variable = calloc(1,sizeof(doc_int8_t));
+                    ((doc_int8_t*)variable)->value = va_arg(*arg_list, int); 
+                break;
+                
+                case dt_uint:
+                    variable = calloc(1,sizeof(doc_uint_t));
+                    ((doc_uint_t*)variable)->value = va_arg(*arg_list, unsigned int); 
+                break;
+                
+                case dt_uint64:
+                    variable = calloc(1,sizeof(doc_uint64_t));
+                    ((doc_uint64_t*)variable)->value = va_arg(*arg_list, uint64_t); 
+                break;
+                
+                case dt_uint32:
+                    variable = calloc(1,sizeof(doc_uint32_t));
+                    ((doc_uint32_t*)variable)->value = va_arg(*arg_list, unsigned int); 
+                break;
+                
+                case dt_uint16:
+                    variable = calloc(1,sizeof(doc_uint16_t));
+                    ((doc_uint16_t*)variable)->value = va_arg(*arg_list, unsigned int); 
+                break;
+                
+                case dt_uint8:
+                    variable = calloc(1,sizeof(doc_uint8_t));
+                    ((doc_uint8_t*)variable)->value = va_arg(*arg_list, unsigned int); 
+                break;
+
+                case dt_bool:
+                    variable = calloc(1,sizeof(doc_bool));
+                    ((doc_bool*)variable)->value = va_arg(*arg_list, int); 
+                break;
+
+                case dt_float:
+                    variable = calloc(1,sizeof(doc_float));
+                    ((doc_float*)variable)->value = va_arg(*arg_list, double); 
+                break;
+
+                case dt_double:
+                    variable = calloc(1,sizeof(doc_double));
+                    double deg = va_arg(*arg_list, double);
+                    ((doc_double*)variable)->value = deg; 
+                break;
+
+                case dt_string:
+                case dt_const_string:
+                case dt_bindata:
+                case dt_const_bindata:
+                    variable = calloc(1,sizeof(doc_bindata)); // for strings or bin_data, the allocation doesn't matter, just the type variable being of the correct type
+                    // order of assignement to len and data matters, should be the same as in the struct declaration
+                    ((doc_bindata*)variable)->data = va_arg(*arg_list, uint8_t*); 
+                    ((doc_bindata*)variable)->len  = va_arg(*arg_list, size_t); 
+                break;
+
+                case dt_null:
+                    variable = calloc(1,sizeof(doc));
+                break;
+            }
+
+            variable->name = name;
+            variable->type = type;
+            variable->childs = 0;
+            variable->child = NULL;
+            variable->prev = NULL;
+            variable->next = NULL;
+
         break;
     }
 
@@ -379,28 +334,55 @@ doc *get_variable_ptr(doc *object_or_array, char *path){
 
     if(name_cpy[0] == '.'){ name_cpy++; }                                           // jump over optional '.' at the beginning of path
     char *var_name = name_cpy;
-    char *var_name_next = strpbrk(var_name, ".");
+    char *var_name_next = strpbrk(var_name, ".[");
 
     if(var_name_next != NULL){                                                      // on the last one
         var_name_next[0] = '\0';                                                    // make the first name acessible directly
         var_name_next++;                                                            // points to other name
     }
+    
+    if((var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
+    
+        childs_amount_t index = strtoull(var_name, NULL, 10);
 
-    do{                                                                             // search names
-        if(!strcmp(cursor->name,var_name)){
-            if(var_name_next == NULL){
-                free(name_cpy_base);
-                return cursor;                                                      // if there are no elements left, return this one
-            }
-            else{
-                doc *return_ptr = get_variable_ptr(cursor, var_name_next);          // else, call the function again on the left elements
-                free(name_cpy_base);
-                return return_ptr;
-            }
+        if(index > object_or_array->childs){
+            free(name_cpy_base);
+            return NULL;
         }
 
-        cursor = cursor->next;
-    }while(cursor != NULL);
+        for(childs_amount_t i = 0ULL; i < index; i++)
+            cursor = cursor->next;
+
+        if(var_name_next == NULL){
+            free(name_cpy_base);
+            return cursor;                                                  
+        }
+        else{
+            doc *return_ptr = get_variable_ptr(cursor, var_name_next);      
+            free(name_cpy_base);
+            return return_ptr;
+        }
+    }
+    else{
+
+        do{                                                                         // search by name                                      
+            if(!strcmp(cursor->name,var_name)){
+                if(var_name_next == NULL){
+                    free(name_cpy_base);
+                    return cursor;                                                  
+                }
+                else{
+                    doc *return_ptr = get_variable_ptr(cursor, var_name_next);      
+                    free(name_cpy_base);
+                    return return_ptr;
+                }
+            }
+
+            cursor = cursor->next;
+        }while(cursor != NULL);
+    }
+
+
 
     free(name_cpy_base);
     return NULL;
@@ -528,7 +510,7 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
     return;
 }
 
-// delete element denote by 'name'
+// delete element denoted by 'name'
 void doc_delete(doc *object_or_array, char *name){
     
     doc *variable = get_variable_ptr(object_or_array, name);                    // get pointer to instance
@@ -561,6 +543,8 @@ void doc_delete(doc *object_or_array, char *name){
                 variable->prev->next = variable->next;
                 variable->next->prev = variable->prev;
             }
+
+            free(variable->name);
 
             switch(variable->type){                                                 // if non const type of string and bindata, free its content as well
                 case dt_string:
@@ -639,5 +623,16 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len){
     ((doc_bindata*)get_variable_ptr(obj,name))->data = new_data;            
     ((doc_bindata*)get_variable_ptr(obj,name))->len = new_len;
     errno_doc_code_internal = errno_doc_ok;
+}
+
+// get array and obj childs amount
+childs_amount_t doc_childs_amount(doc *object_or_array){
+    if(object_or_array == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_msg_doc_internal = NULL;
+        return 0;
+    }
+    
+    return object_or_array->childs;
 }
 
