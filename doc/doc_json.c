@@ -10,7 +10,10 @@
 #define VALUE_TOKEN_SEQ_W_SQR_BRK   ("\"-0123456789.{[tfn]")
 #define TERMINATORS                 (",}]")
 #define WHITE_SPACE                 (" \t\n\r\v\f")
-#define WHITE_SPACE_W_COMMA         (" \t\n\r\v\f,")
+
+#define UINT64_MAX_DECIMAL_CHARS    (20)                                            // 64/log2(10) = 63/3.322 = 20
+#define FLOAT_MAX_DECIMAL_CHARS     (27)                                            // 1.428571428571428492127e-01 is the biggest
+#define FLOAT_DECIMAL_PLACES        (10)                                            // 1.428571428571428492127e-01 has 21 decimal places
 
 // data type for rational javascript numbers
 // data type for rational javascript numbers
@@ -23,6 +26,7 @@ typedef doc_double      rational_number_t;                                      
 #define strto_integer(const_char_ptr_string, const_char_ptr_ptr_endptr) atoi(const_char_ptr_string)                                             // to convert to number
 typedef doc_int32_t     integer_number_t;                                           // to allocate the correct 'doc_*' type
 
+/* ----------------------------------------- Parser ----------------------------------------- */
 
 char *parse_string(char **string){
     (*string) = strpbrk((*string), "\"") + 1;                                           // locate string beggining
@@ -137,6 +141,7 @@ doc *parse_value(char **string){
             variable_string->header.type = dt_string;
 
             variable_string->string = parse_string(&value_begin);
+            variable_string->len    = strlen(variable_string->string);
 
             (*string) = value_begin;
         break;
@@ -219,3 +224,295 @@ doc *doc_parse_json(char *file_stream){
     
     return json; 
 } 
+
+/* ----------------------------------------- Stringify -------------------------------------- */
+
+void stringify(doc *variable, char **base_address, size_t *length){
+
+    char *value = NULL;
+    char *temp = NULL;
+    doc *member = NULL;
+    size_t value_len;
+    bool first_call = false;
+
+    if(*base_address == NULL){
+        *base_address = calloc(1, sizeof(**base_address));
+        *length = 1;
+        first_call = true;
+    }
+    
+    switch(variable->type){
+
+        case dt_obj:
+        case dt_array:
+
+            if(*(variable->name) == '\0' || first_call){                            // anonymous obj
+                (*length) += 1;
+                (*base_address) = realloc(*base_address, *length);
+                
+                if(variable->type == dt_obj){ strcat(*base_address, "{"); }else{ strcat(*base_address, "["); }
+            }                         
+            else{
+                value_len = strlen(variable->name) + 5;                             // "\"name\":{" has (strlen + 5) chars
+                value = calloc(1, sizeof(*value) * value_len);
+
+                if(variable->type == dt_obj){ 
+                    snprintf(value, value_len, "\"%s\":{", variable->name); 
+                }
+                else{ 
+                    snprintf(value, value_len, "\"%s\":[", variable->name); 
+                }
+
+                (*length) += value_len;
+                (*base_address) = realloc(*base_address, *length);
+                strcat(*base_address, value);
+            }                  
+
+            member = variable->child;
+
+            for(childs_amount_t i = 0; i < variable->childs; i++){
+                if( i != 0 )
+                    strcat(*base_address, ",");                                     // cat comma before every member, except on the first
+                
+                stringify(member, base_address, length);
+
+                (*length) += 1;
+                (*base_address) = realloc(*base_address, *length);
+                member = member->next;
+            }
+
+            (*length) += 1;
+            (*base_address) = realloc(*base_address, *length);
+            if(variable->type == dt_obj){ strcat(*base_address, "}"); }else{ strcat(*base_address, "]"); }
+            
+        break;
+
+        case dt_double:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%.*G", FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+            
+        case dt_float:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS, sizeof(*value));     
+            
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%.*G", FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+
+        case dt_int:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_int8:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int8_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int8_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_int16:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int16_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int16_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_int32:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int32_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int32_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_int64:        
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int64_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int64_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_uint:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_uint8:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint8_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint8_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_uint16:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint16_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint16_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_uint32:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint32_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint32_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+ 
+        case dt_uint64:
+            value_len = strlen(variable->name) + 4;
+            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint64_t *)(variable))->value);
+            else
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint64_t *)(variable))->value);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+
+        case dt_bool:
+            value_len = strlen(variable->name) + 6 + 4;
+            value = calloc(value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len, "\"%s\":%s", variable->name, (((doc_bool *)(variable))->value) ? "true" : "false" );
+            else
+                snprintf(value, value_len, "%s", (((doc_bool *)(variable))->value) ? "true" : "false" );
+
+            *length += strlen(value);            
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+
+        case dt_null:
+            value_len = strlen(variable->name) + 5 + 4;
+            value = calloc(value_len, sizeof(*value));     
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len, "\"%s\":%s", variable->name, "null");
+            else
+                snprintf(value, value_len, "%s", "null");
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+
+        case dt_string:
+        case dt_const_string:
+            value_len = strlen(variable->name) + ((doc_string *)variable)->len + 6;
+            value = calloc(1, value_len);
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len, "\"%s\":\"%s\"", variable->name, ((doc_string *)variable)->string);
+            else
+                snprintf(value, value_len, "\"%s\"", ((doc_string *)variable)->string);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
+        break;
+
+        case dt_bindata:
+        case dt_const_bindata:
+            // BASE64 ENCODE 
+        break;
+    }
+
+    if(value != NULL)
+        free(value);
+}
+
+char *doc_stringify_json(doc *json_doc){
+    char *json_stream = NULL;
+    size_t json_stream_len = 0;
+
+    stringify(json_doc, &json_stream, &json_stream_len);
+
+    return json_stream;
+}

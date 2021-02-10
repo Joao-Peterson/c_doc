@@ -25,22 +25,18 @@ char *read_asci(const char *path){
 int main(int argc, char **argv){
 
     char *json_stream = read_asci("./test/types.json");
-
     doc *json_doc = doc_parse_json(json_stream);
-    
-    doc *value = doc_get(json_doc, "array_crazy_numbers[1]");
-    if(doc_error_code < 0){
-        printf("Error: %s\n", doc_get_error_msg());
-        return -1;
-    }
 
-    double rational_value = doc_get_value(value, double);
+    char *json_stream_out = doc_stringify_json(json_doc);    
 
-    printf("Value: [%.2f]", rational_value);
+    FILE *json_out = fopen("./test/out.json", "w+");
+    fprintf(json_out, "%s", json_stream_out);
+    fflush(json_out);
+    fclose(json_out);
 
     doc_delete(json_doc, ".");
-
     free(json_stream);
+    free(json_stream_out);
 
     return 0;
 }   

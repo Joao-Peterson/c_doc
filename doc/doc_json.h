@@ -5,4 +5,6 @@
 
 doc *doc_parse_json(char *file_stream);
 
+char *doc_stringify_json(doc *json_doc);
+
 #endif
