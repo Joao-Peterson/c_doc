@@ -1,21 +1,25 @@
 CC = gcc
 C_ARGS = -g
 
-build : main.exe clear_obj
+build : main.exe
 
-main.exe : main.o doc/doc.o doc/doc_json.o
+main.exe : build/main.o build/doc.o build/doc_json.o build/base64.o
 	${CC} $^ -o $@
 
-main.o : main.c
+build/main.o : main.c
 	${CC} ${C_ARGS} -c $< -o $@
 
-doc/doc.o : doc/doc.c
+build/doc.o : doc/doc.c
 	${CC} ${C_ARGS} -c $< -o $@
 
-doc/doc_json.o : doc/doc_json.c
+build/doc_json.o : doc/doc_json.c
 	${CC} ${C_ARGS} -c $< -o $@
 
-clear_obj : 
-	@rm main.o
-	@rm doc/doc.o
-	@rm doc/doc_json.o
+build/base64.o : base64/base64.c
+	${CC} ${C_ARGS} -c $< -o $@
+
+clean : 
+	@rm build/main.o
+	@rm build/doc.o
+	@rm build/doc_json.o
+	@rm build/base64.o
