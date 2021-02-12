@@ -24,33 +24,29 @@ char *read_asci(const char *path){
     return buf;
 }
 
+char blob[] = "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
+
 int main(int argc, char **argv){
 
-    // char *json_stream = read_asci("./test/types.json");
-    // doc *json_doc = doc_parse_json(json_stream);
+    char *json_stream = read_asci("./test/types.json"); 
+    doc *json_doc = doc_parse_json(json_stream);
 
-    // char *json_stream_out = doc_stringify_json(json_doc);    
+    doc_add(json_doc, ".", "blob", dt_const_bindata, (void *)blob, (size_t)269);
 
-    // FILE *json_out = fopen("./test/out.json", "w+");
-    // fprintf(json_out, "%s", json_stream_out);
-    // fflush(json_out);
-    // fclose(json_out);
+    if(doc_error_code){
+        printf("[DOC] : %s\n", doc_get_error_msg());
+    }
 
-    // doc_delete(json_doc, ".");
-    // free(json_stream);
-    // free(json_stream_out);
+    char *json_stream_out = doc_stringify_json(json_doc);    
 
-    char *string = "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
+    FILE *json_out = fopen("./test/out.json", "w+");
+    fprintf(json_out, "%s", json_stream_out);
+    fflush(json_out);
+    fclose(json_out);
 
-    char *encode = base64_encode(string, strlen(string));
-
-    char *decode = base64_decode(encode, strlen(encode));
-
-    printf("Encoded:\n%s\n\n", encode);
-    printf("Decoded:\n%s\n\n", decode);
-
-    free(encode);
-    free(decode);
+    doc_delete(json_doc, ".");
+    free(json_stream);
+    free(json_stream_out);
 
     return 0;
 }   

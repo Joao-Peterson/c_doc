@@ -18,8 +18,9 @@ build/doc_json.o : doc/doc_json.c
 build/base64.o : base64/base64.c
 	${CC} ${C_ARGS} -c $< -o $@
 
-clean : 
+clear : 
 	@rm build/main.o
 	@rm build/doc.o
 	@rm build/doc_json.o
 	@rm build/base64.o
+	@rm main.exe

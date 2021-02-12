@@ -29,18 +29,19 @@
 
 // error codes
 typedef enum{
-    errno_doc_ok                                                                    =  0,
-    errno_doc_not_a_type                                                            = -1,
-    errno_doc_overflow_quantity_members_or_name_is_too_big                          = -2,
-    errno_doc_value_not_same_type_as_array                                          = -3,
-    errno_doc_duplicate_names                                                       = -4,
-    errno_doc_null_passed_obj                                                       = -5,
-    errno_doc_obj_not_found                                                         = -6,
-    errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator    = -7,
-    errno_doc_trying_to_add_new_data_to_non_object_or_non_array                     = -8,
-    errno_doc_trying_to_set_value_of_non_value_type_data_type                       = -9,
-    errno_doc_trying_to_set_string_of_non_string_data_type                          = -10,
-    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                        = -11
+    errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first     =  1,
+    errno_doc_ok                                                                                                                =  0,
+    errno_doc_not_a_type                                                                                                        = -1,
+    errno_doc_overflow_quantity_members_or_name_is_too_big                                                                      = -2,
+    errno_doc_value_not_same_type_as_array                                                                                      = -3,
+    errno_doc_duplicate_names                                                                                                   = -4,
+    errno_doc_null_passed_obj                                                                                                   = -5,
+    errno_doc_obj_not_found                                                                                                     = -6,
+    errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator                                                = -7,
+    errno_doc_trying_to_add_new_data_to_non_object_or_non_array                                                                 = -8,
+    errno_doc_trying_to_set_value_of_non_value_type_data_type                                                                   = -9,
+    errno_doc_trying_to_set_string_of_non_string_data_type                                                                      = -10,
+    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                                                                    = -11
 }errno_doc_code_t;
 
 /* ----------------------------------------- Private Struct's --------------------------------- */
@@ -66,6 +67,7 @@ char *errno_msg_doc_internal = NULL;
 
 // array to get the value and name of defined errors 
 const errno_doc_t errno_doc_msg_code_array[] = {
+    ERR_TO_STRUCT(errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first),
     ERR_TO_STRUCT(errno_doc_ok),
     ERR_TO_STRUCT(errno_doc_not_a_type),
     ERR_TO_STRUCT(errno_doc_overflow_quantity_members_or_name_is_too_big),
@@ -100,7 +102,6 @@ int is_name_duplicate(doc *obj_or_array, char *name){
 
 // parse the syntax and build the data structure recursevily
 doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
-
     if(!IS_DOC_TYPE(type)){
         errno_msg_doc_internal = name;
         errno_doc_code_internal = errno_doc_not_a_type;
@@ -292,6 +293,11 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                     // order of assignement to len and data matters, should be the same as in the struct declaration
                     ((doc_bindata*)variable)->data = va_arg(*arg_list, uint8_t*); 
                     ((doc_bindata*)variable)->len  = va_arg(*arg_list, size_t); 
+
+                    if(((doc_bindata*)variable)->len >= 0x0000000100000000){
+                        errno_doc_code_internal = errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first;
+                        errno_msg_doc_internal = name;
+                    }
                 break;
 
                 case dt_null:
@@ -494,6 +500,8 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
         return;
     }
 
+    variable->childs++;
+
     if(variable->child == NULL){
         variable->child = new_variable;
     }
@@ -506,7 +514,6 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
         new_variable->prev = variable;
     }
 
-    errno_doc_code_internal = errno_doc_ok;
     return;
 }
 

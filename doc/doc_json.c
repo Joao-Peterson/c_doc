@@ -5,29 +5,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "../base64/base64.h"
 
-#define VALUE_TOKEN_SEQ             ("\"-0123456789.{[tfn")
-#define VALUE_TOKEN_SEQ_W_SQR_BRK   ("\"-0123456789.{[tfn]")
-#define TERMINATORS                 (",}]")
-#define WHITE_SPACE                 (" \t\n\r\v\f")
+/* ----------------------------------------- Private Functions ------------------------------ */
 
-#define UINT64_MAX_DECIMAL_CHARS    (20)                                            // 64/log2(10) = 63/3.322 = 20
-#define FLOAT_MAX_DECIMAL_CHARS     (27)                                            // 1.428571428571428492127e-01 is the biggest
-#define FLOAT_DECIMAL_PLACES        (10)                                            // 1.428571428571428492127e-01 has 21 decimal places
-
-// data type for rational javascript numbers
-// data type for rational javascript numbers
-#define RATIONAL_TYPE (dt_double)                                                   // to be put on 'type' member of 'doc'
-#define strto_rational(const_char_ptr_string, const_char_ptr_ptr_endptr) strtod(const_char_ptr_string, const_char_ptr_ptr_endptr)               // to convert to number
-typedef doc_double      rational_number_t;                                          // to allocate the correct 'doc_*' type
-                                                                                    
-// data type for rational javascript numbers
-#define INTEGER_TYPE (dt_int32)                                                     // to be put on 'type' member of 'doc'
-#define strto_integer(const_char_ptr_string, const_char_ptr_ptr_endptr) atoi(const_char_ptr_string)                                             // to convert to number
-typedef doc_int32_t     integer_number_t;                                           // to allocate the correct 'doc_*' type
-
-/* ----------------------------------------- Parser ----------------------------------------- */
-
+// parse a string from '"' to the end '"', and cat it to the *string
 char *parse_string(char **string){
     (*string) = strpbrk((*string), "\"") + 1;                                           // locate string beggining
 
@@ -54,6 +36,7 @@ char *parse_string(char **string){
     return read_string;
 }
 
+// parse a value after ':', may it be any json type and cat it to the *string, recursive
 doc *parse_value(char **string){    
     doc *variable = NULL;
     
@@ -204,33 +187,11 @@ doc *parse_value(char **string){
     return variable;
 }
 
-doc *doc_parse_json(char *file_stream){
-    char *cursor = NULL;
-    doc *null_return = calloc(1, sizeof(*null_return));
-    null_return->type = dt_null;
-
-    cursor = strpbrk(file_stream, "{");                                 
-    char *end_check = strpbrk(cursor, "\"}");
-
-    if(*end_check == '}')
-        return null_return;
-
-    doc *json = parse_value(&cursor);
-
-    const char *name = "json";
-    size_t name_len = strlen(name);
-    json->name = malloc(sizeof(*name)*name_len + 1);
-    strncpy(json->name, name, name_len + 1);
-    
-    return json; 
-} 
-
-/* ----------------------------------------- Stringify -------------------------------------- */
-
+// recursive function call to create the json
 void stringify(doc *variable, char **base_address, size_t *length){
 
     char *value = NULL;
-    char *temp = NULL;
+    char *buffer = NULL;
     doc *member = NULL;
     size_t value_len;
     bool first_call = false;
@@ -500,7 +461,21 @@ void stringify(doc *variable, char **base_address, size_t *length){
 
         case dt_bindata:
         case dt_const_bindata:
-            // BASE64 ENCODE 
+            buffer = base64_encode(((doc_bindata *)variable)->data, ((doc_bindata *)variable)->len);            
+
+            value_len = strlen(variable->name) + strlen(buffer) + 6;
+            value = calloc(1, value_len);
+
+            if(variable->name[0] != '\0')
+                snprintf(value, value_len, "\"%s\":\"%s\"", variable->name, buffer);
+            else
+                snprintf(value, value_len, "\"%s\"", buffer);
+
+            free(buffer);
+
+            *length += strlen(value);
+            *base_address = realloc(*base_address, *length);
+            strcat(*base_address, value);
         break;
     }
 
@@ -508,9 +483,37 @@ void stringify(doc *variable, char **base_address, size_t *length){
         free(value);
 }
 
+/* ----------------------------------------- Functions -------------------------------------- */
+
+// parse json
+doc *doc_parse_json(char *file_stream){
+    char *cursor = NULL;
+    doc *null_return = calloc(1, sizeof(*null_return));
+    null_return->type = dt_null;
+
+    cursor = strpbrk(file_stream, "{");                                 
+    char *end_check = strpbrk(cursor, "\"}");
+
+    if(*end_check == '}')
+        return null_return;
+
+    doc *json = parse_value(&cursor);
+
+    const char *name = "json";
+    size_t name_len = strlen(name);
+    json->name = malloc(sizeof(*name)*name_len + 1);
+    strncpy(json->name, name, name_len + 1);
+    
+    return json; 
+} 
+
+// make a json out of doc
 char *doc_stringify_json(doc *json_doc){
     char *json_stream = NULL;
     size_t json_stream_len = 0;
+
+    if(json_doc->type != dt_obj)
+        return NULL;
 
     stringify(json_doc, &json_stream, &json_stream_len);
 
