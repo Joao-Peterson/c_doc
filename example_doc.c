@@ -4,6 +4,8 @@
 
 int main(int argc, char **argv){
 
+    char *some_data_array = "AAAAAAAAAAAAAAAAAAAAAA";    
+
     // new dynamic object
     doc *obj = doc_new(
         "velocidades", dt_obj,
@@ -16,7 +18,7 @@ int main(int argc, char **argv){
                 "p4", dt_double, 22.0,
             ";",
             "integer", dt_uint8, 255,
-            "packets", dt_const_bindata, "void_ptr", 9,
+            "packets", dt_const_bindata, (void *)some_data_array, (size_t)9,
             "future_value", dt_null,
             "some_object", dt_obj,
             ";",

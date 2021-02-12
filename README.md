@@ -4,7 +4,7 @@ This library is made for C and C++ programs and implement a data structure to mi
 present in interpreted languages, parsers can be written to convert files notations such as xml, json, etc, to
 the data structure.
 
-TL;DR: Sources and include files are in [doc](./doc). Use doc_new() to create a new object and _set() and _get() commands
+TL;DR: Sources and include files are in [doc](./doc) and [base64](./base64). Use doc_new() to create a new object and _set() and _get() commands
 to interact, doc_delete() when you're done. Also check out the parser for ease handle of markdown files!
 
 Created by: João Peterson Scheffer - 2021.
@@ -18,7 +18,7 @@ and link it with your main application in compilation or linking step.
 
 ### Use
 
-A sample application is written in [main.c](./main.c).
+A sample application is written in [example_doc.c](./example_doc.c).
 
 Starting by creating a new object:
 
@@ -34,9 +34,21 @@ Starting by creating a new object:
                 "p4", dt_double, 22.0,
             ";",
             "integer", dt_uint8, 255,
-            "packets", dt_const_bindata, "void_ptr", 9,
+            "packets", dt_const_bindata, (void *)some_data_array, (size_t)9,
             "future_value", dt_null,
             "some_object", dt_obj,
+            ";",
+            "matrix", dt_array, 
+                dt_array, 
+                    "1", dt_int, 11,
+                    "2", dt_int, 22,
+                    "3", dt_int, 33,
+                ";",
+            ";", 
+            "some_values", dt_array,
+                dt_uint8, 251,
+                dt_uint8, 252,
+                dt_uint8, 253,
             ";",
         ";"
     ); 
@@ -44,10 +56,11 @@ Starting by creating a new object:
 
 The syntax is, name, type and then value or values, if any. Objects and arrays must have a ";" terminator character.
 Arrays only hold members of the same type. Members dt_null don't have a value. dt_string, dt_const_string, dt_bindata and
-dt_const_bindata have a extra value, the length. dt_const_ instances have pointers to const data in memory, so the library
+dt_const_bindata have a extra value, the length (size_T). dt_const_ instances have pointers to const data in memory, so the library
 doesn't free its memory when a doc_delete() call occurs. 
 
 You can check errors pretty easily using the doc_error_code variable and doc_get_error_msg() to get a string message.
+0 means ok, negative numbers are errors, positive numbers are informative messages.
 
 ```c
     if(doc_error_code < 0){
@@ -91,3 +104,60 @@ And in the end, delete it all, or any element actually, using the same syntax as
     doc_delete(obj,".");
 ```
 
+### Parse and Stringify
+
+The doc data structure has been made with a main idea in mind, ease handling of markdown files, widely used for data transmission, configuration data, encapsulate data, organize, and so on. So it's pretty easy to parse and create files to and from the data structure. 
+
+For a json file format, it goes like this:
+
+```c
+    char *json_stream = read_asci("./test/types.json"); 
+    doc *json_doc = doc_parse_json(json_stream);
+```
+
+First loading the the file into memory, then calling the parser to get the data structure, simple. 
+
+Calling stringify we can can make any data structure into a json file, as long as the parent doc is a single object file.
+
+```c
+    char *json_stream_out = doc_stringify_json(json_doc);
+```
+
+We can even add new data to parsed files and stringify then with a few lines of code:
+
+```c
+    char blob[270] = "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
+
+    doc_add(json_doc, ".", "blob", dt_const_bindata, (void *)blob, (size_t)269);
+```
+
+In this example we added a long string as constant binary data, without the null terminator character (269), with any other data type, the strigified version will be exactly the same, except with dt_bindata and dt_const_bindata, where the data will be converted to base64 first.
+
+In the example [parser_example.c](./parser_example.c), types.json looks like this before:
+
+```c
+    {
+        "string" : "string_alou",
+        "rational_number" : 1.25,
+        "integer_number" : 64,
+        "null_value" : null,
+        "bool" : true,
+        "array_crazy_numbers" : [ 1.0, 3.14E-1, 100E10]
+    }
+```
+
+And after:
+
+```c
+    {
+        "string": "string_alou",
+        "rational_number": 1.25,
+        "integer_number": 64,
+        "null_value": null,
+        "bool": true,
+        "array_crazy_numbers": [1, 0.314, 1E+12],
+        "blob": "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4="
+    }
+```
+
+The actual output does not contain line breaks and identation, this is a prettyfied version.

@@ -24,9 +24,9 @@ char *read_asci(const char *path){
     return buf;
 }
 
-char blob[] = "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
-
 int main(int argc, char **argv){
+
+    char blob[] = "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
 
     char *json_stream = read_asci("./test/types.json"); 
     doc *json_doc = doc_parse_json(json_stream);
