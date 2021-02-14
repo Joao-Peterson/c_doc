@@ -1,26 +1,58 @@
-CC = gcc
-C_ARGS = -g
+# ---------------------------------------------------------------
+# https://www.rapidtables.com/code/linux/gcc/gcc-l.html <- how to link libs
 
-build : main.exe
+CC := gcc
 
-main.exe : build/main.o build/doc.o build/doc_json.o build/base64.o
-	${CC} $^ -o $@
+C_FLAGS :=
 
-build/main.o : main.c
-	${CC} ${C_ARGS} -c $< -o $@
+I_FLAGS :=
 
-build/doc.o : doc/doc.c
-	${CC} ${C_ARGS} -c $< -o $@
+L_FLAGS :=
 
-build/doc_json.o : doc/doc_json.c
-	${CC} ${C_ARGS} -c $< -o $@
+SOURCES := doc/doc.c doc/doc_json.c base64/base64.c
+HEADERS := doc/doc.h doc/doc_json.h
 
-build/base64.o : base64/base64.c
-	${CC} ${C_ARGS} -c $< -o $@
+VERSION := 1.0
+
+LIB_NAME := libdoc.a
+DIST_NAME := C_doc_Win_x86_64_$(VERSION).tar.gz
+
+DIST_DIR := dist/
+BUILD_DIR := build/
+
+ARCHIVER := ar -rcs
+
+TAR := tar -c -v -z -f
+
+# ---------------------------------------------------------------
+
+# rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) \
+#   $(filter $(subst *,%,$2),$d))
+
+OBJS := $(SOURCES:.c=.o)
+OBJS_BUILD := $(addprefix $(BUILD_DIR), $(notdir $(SOURCES:.c=.o)))
+
+# ---------------------------------------------------------------
+
+.PHONY : build
+
+build : C_FLAGS += -g
+build : $(OBJS)
+
+release : C_FLAGS += -O3
+release : $(OBJS) dist pack
+
+%.o : %.c
+	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $(addprefix $(BUILD_DIR), $(notdir $@))
+
+
+dist : $(OBJS_BUILD)
+	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $< 
+	cp $(HEADERS) $(DIST_DIR)
+
+# pack : 
+# 	$(TAR) $(DIST_NAME) 
 
 clear : 
-	@rm build/main.o
-	@rm build/doc.o
-	@rm build/doc_json.o
-	@rm build/base64.o
-	@rm main.exe
+	@rm -f $(OBJS_BUILD)
+	@rm -f $(DIST_DIR)$(LIB_NAME)

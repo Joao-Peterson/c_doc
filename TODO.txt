@@ -1,0 +1,16 @@
+- Implement search and copy operations
+
+- Make binaries and dist
+
+- Implement static interfaces with structs, dunno, something like this:
+
+#define REGISTER_INTERFACE(struct) (#struct)
+
+REGISTER_INTERFACE(
+    typedef struct{
+        uint8_t data;
+        int other_data;
+        char *a_string;
+    }my_interface;
+)
+

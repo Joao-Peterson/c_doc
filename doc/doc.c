@@ -427,7 +427,7 @@ int __doc_get_error_code(void){
 
 // get error msg
 char *doc_get_error_msg(void){
-    char *message = malloc(ERROR_MSG_LEN_DOC_HEADER);
+    char *message = malloc(ERROR_MSG_LEN_DOC_HEADER + 1);
     message[ERROR_MSG_LEN_DOC_HEADER] = '\0';
     char *error_msg = NULL;
 
