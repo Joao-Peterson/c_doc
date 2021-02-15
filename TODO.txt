@@ -1,8 +1,14 @@
+Important: 
+
 - Make binaries and dist
 
-- Implement search and copy operations
-
 - Make doc_add like this: doc_add(doc *obj, char *name_to_add_to, ...)
+
+- Make a better tutorial on syntax, for every data type, reinforce the cast to (size_t) for strings and bindata
+
+Features :
+
+- Implement search and copy operations
 
 - Implement static interfaces with structs, dunno, something like this:
 

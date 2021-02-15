@@ -115,7 +115,11 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
         return NULL;
     }
 
+    uint8_t *buffer;
     doc *variable = NULL;
+
+    char *name_copy = malloc(sizeof(*name_copy)*(strlen(name) + 1));
+    memcpy(name_copy, name, strlen(name) + 1);
 
     switch(type){
 
@@ -123,7 +127,7 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
         case dt_obj:
 
             variable = calloc(1, sizeof(doc));
-            variable->name = name;
+            variable->name = name_copy;
             variable->type = type;
             variable->child = NULL;
             variable->parent = NULL;
@@ -135,14 +139,15 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
             char *member_name;
             doc_type_t member_type;
             doc_type_t array_type_check;
+            childs_amount_t i;
 
-            for(childs_amount_t i = 0; true; i++){                                              // loop trought
+            for(i = 0; true; i++){                                                  // loop trought
 
                 member_name = va_arg(*arg_list, char *);                            // MEMBER NAME
 
                 doc_type_t name_check_for_type = *((doc_type_t*)&member_name);
 
-                if(variable->type == dt_array && IS_DOC_TYPE(name_check_for_type) ){      // in case of an array, members of type array and obj can have a null name  
+                if(variable->type == dt_array && IS_DOC_TYPE(name_check_for_type) ){// in case of an array, members of type array and obj can have a null name  
 
                     member_type = *((doc_type_t*)&member_name);                     // MEMBER TYPE
                     member_name = malloc(sizeof(char*)*1);
@@ -150,12 +155,6 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
 
                 }
                 else{
-                    
-                    size_t temp_size = strlen(member_name)+1;
-                    char *temp = malloc(sizeof(char)*temp_size);
-                    strncpy(temp, member_name, temp_size);
-
-                    member_name = temp;
 
                     if(i > MAX_OBJ_MEMBER_QTY || strlen(member_name) > DOC_NAME_MAX_LEN){
                         errno_doc_code_internal = errno_doc_overflow_quantity_members_or_name_is_too_big;
@@ -209,10 +208,9 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                 member->next = NULL;
                 member->parent = variable;
                 last_doc = member;
-                variable->childs = i;
             }
 
-            variable->childs++;                                                     // one more because of loop for exit
+            variable->childs = i;
 
         break;
         
@@ -285,14 +283,28 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                     ((doc_double*)variable)->value = deg; 
                 break;
 
-                case dt_string:
                 case dt_const_string:
-                case dt_bindata:
                 case dt_const_bindata:
                     variable = calloc(1,sizeof(doc_bindata)); // for strings or bin_data, the allocation doesn't matter, just the type variable being of the correct type
                     // order of assignement to len and data matters, should be the same as in the struct declaration
-                    ((doc_bindata*)variable)->data = va_arg(*arg_list, uint8_t*); 
-                    ((doc_bindata*)variable)->len  = va_arg(*arg_list, size_t); 
+                    ((doc_bindata*)variable)->len = va_arg(*arg_list, size_t); 
+                    ((doc_bindata*)variable)->data = va_arg(*arg_list, uint8_t*);
+
+                    if(((doc_bindata*)variable)->len >= 0x0000000100000000){
+                        errno_doc_code_internal = errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first;
+                        errno_msg_doc_internal = name;
+                    }
+                break;
+                
+                case dt_string:
+                case dt_bindata:
+                    variable = calloc(1,sizeof(doc_bindata)); // for strings or bin_data, the allocation doesn't matter, just the type variable being of the correct type
+                    // order of assignement to len and data matters, should be the same as in the struct declaration
+                    buffer = va_arg(*arg_list, uint8_t*); 
+                    ((doc_bindata*)variable)->len = va_arg(*arg_list, size_t); 
+                    
+                    ((doc_bindata*)variable)->data = calloc(((doc_bindata*)variable)->len + 1, sizeof(uint8_t)); 
+                    memcpy(((doc_bindata*)variable)->data, buffer, ((doc_bindata*)variable)->len + 1);
 
                     if(((doc_bindata*)variable)->len >= 0x0000000100000000){
                         errno_doc_code_internal = errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first;
@@ -305,7 +317,7 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                 break;
             }
 
-            variable->name = name;
+            variable->name = name_copy;
             variable->type = type;
             variable->childs = 0;
             variable->child = NULL;
