@@ -40,14 +40,14 @@ build : C_FLAGS += -g
 build : $(OBJS)
 
 release : C_FLAGS += -O3
-release : $(OBJS) dist pack
+release : $(OBJS) dist
 
 %.o : %.c
 	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $(addprefix $(BUILD_DIR), $(notdir $@))
 
 
 dist : $(OBJS_BUILD)
-	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $< 
+	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $^
 	cp $(HEADERS) $(DIST_DIR)
 
 # pack : 

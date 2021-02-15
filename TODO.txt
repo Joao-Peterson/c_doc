@@ -1,6 +1,8 @@
+- Make binaries and dist
+
 - Implement search and copy operations
 
-- Make binaries and dist
+- Make doc_add like this: doc_add(doc *obj, char *name_to_add_to, ...)
 
 - Implement static interfaces with structs, dunno, something like this:
 
