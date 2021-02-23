@@ -261,7 +261,7 @@ typedef struct{
     uint8_t *data;                              /**< pointer to binary data */                                                         
 }doc_bindata;
 
-#pragma (pop)
+#pragma pack(pop)
 
 /* ----------------------------------------- Prototypes ------------------------------------- */
 
