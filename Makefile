@@ -9,7 +9,10 @@ I_FLAGS :=
 
 L_FLAGS :=
 
-SOURCES := doc/doc.c doc/doc_json.c base64/base64.c
+SOURCES := doc/doc.c doc/doc_json.c base64/base64.c test.c
+
+EXE:= main.exe
+
 HEADERS := doc/doc.h doc/doc_json.h
 
 VERSION := 1.0
@@ -49,6 +52,9 @@ release : $(OBJS) dist
 dist : $(OBJS_BUILD)
 	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $^
 	cp $(HEADERS) $(DIST_DIR)
+
+main: build 
+	$(CC) $(OBJS_BUILD) -o $(EXE)
 
 # pack : 
 # 	$(TAR) $(DIST_NAME) 

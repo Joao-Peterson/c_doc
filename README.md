@@ -94,7 +94,7 @@ You can then get a pointer to the value and retrieve the value using a agnostic 
 In a similar way you can set the value:
 
 ```c
-    doc_set_value(obj, "pontos.p3", double, 130.0);
+    doc_set(obj, "pontos.p3", double, 130.0);
 ```
 
 And in the end, delete it all, or any element actually, using the same syntax as seen above in doc_add().

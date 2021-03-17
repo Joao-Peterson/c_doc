@@ -84,6 +84,16 @@ const errno_doc_t errno_doc_msg_code_array[] = {
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
+// allocate and copy data
+void *_mem_alloc_cpy(void *data, size_t size, size_t elements){
+    void *buffer = calloc(1, size);
+    memcpy(buffer, data, size);
+    return buffer;
+}
+
+// macro for type agnostic
+#define mem_alloc_cpy(data, type, size)   (_mem_alloc_cpy((void*)data, sizeof(type), size))
+
 // check instance for name duplicates
 int is_name_duplicate(doc *obj_or_array, char *name){
     doc *cursor = obj_or_array->child;
@@ -406,7 +416,8 @@ doc *get_variable_ptr(doc *object_or_array, char *path){
     return NULL;
 }
 
-/* ----------------------------------------- Functions -------------------------------------- */
+
+// Macro checking ----------------------------------
 
 // check if obj is null, used on macros
 doc *__check_obj(doc *obj){
@@ -436,6 +447,12 @@ doc *__check_obj_is_value(doc *obj){
 int __doc_get_error_code(void){
     return errno_doc_code_internal;
 }
+
+
+/* ----------------------------------------- Functions -------------------------------------- */
+
+
+// Error handling ----------------------------------
 
 // get error msg
 char *doc_get_error_msg(void){
@@ -469,6 +486,9 @@ char *doc_get_error_msg(void){
 
     return message;
 }
+
+
+// Doc functions -----------------------------------
 
 // create new object
 doc *doc_new(char *name, doc_type_t type, ...){
@@ -526,6 +546,7 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
         new_variable->prev = variable;
     }
 
+    errno_doc_code_internal = errno_doc_ok;
     return;
 }
 
@@ -588,14 +609,7 @@ void doc_delete(doc *object_or_array, char *name){
 }
 
 // get pointer to element
-doc* doc_get(doc* object_or_array, char *name){
-    // check to see if doc* is obj/array
-    if(object_or_array->type != dt_obj && object_or_array->type != dt_array){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
-        errno_msg_doc_internal = "null";
-        return NULL;
-    }
-
+doc* doc_get_ptr(doc* object_or_array, char *name){
     doc *variable = get_variable_ptr(object_or_array, name);
 
     if(variable == NULL){
@@ -655,3 +669,200 @@ childs_amount_t doc_childs_amount(doc *object_or_array){
     return object_or_array->childs;
 }
 
+// appends a already made variable to a object or array
+void doc_append(doc *object_or_array, char *name, doc *variable){
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_msg_doc_internal  = variable->name;
+        return;
+    }
+
+    doc *obj = get_variable_ptr(object_or_array, name);
+
+    if(obj == NULL){
+        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(obj->type != dt_obj && obj->type != dt_array){                     // check if it is an array or object
+        errno_doc_code_internal = errno_doc_trying_to_add_new_data_to_non_object_or_non_array;
+        errno_msg_doc_internal = variable->name;
+        return;
+    }
+
+    if(obj->child == NULL){
+        obj->child = variable;
+        variable->parent = obj;
+    }
+    else{
+        doc *cursor = obj->child;
+
+        while(cursor->next != NULL)
+            cursor = cursor->next;
+
+        cursor->next = variable;
+        variable->prev = cursor;
+    }
+
+    obj->childs++;
+
+    errno_doc_code_internal = errno_doc_ok;
+}
+
+// allocate and copy a variable
+doc *doc_copy(doc *variable, char *name){
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_msg_doc_internal  = variable->name;
+        return NULL; 
+    }
+
+    variable = get_variable_ptr(variable, name);
+
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_msg_doc_internal = name;
+        return NULL;
+    }
+
+    doc *copy = NULL;
+    doc *cursor = NULL;
+    doc *member = NULL;
+    doc *last_member = NULL;
+
+    switch (variable->type)
+    {
+        case dt_obj:
+        case dt_array:
+            copy = (doc*)mem_alloc_cpy(variable, doc, 1);
+
+            cursor = copy->child;
+
+            for(childs_amount_t i = 0; i < copy->childs; i++){
+                member = doc_copy(cursor, ".");
+                
+                if(i == 0){
+                    copy->child = member;
+                    member->prev = NULL;
+                    member->next = NULL;
+                    member->parent = copy;
+                }
+                else{
+                    member->next = NULL;
+                    member->prev = last_member;
+                    last_member->next = member;
+                }
+
+                cursor = cursor->next;
+            }
+
+        break;
+        
+        case dt_null:
+            copy = (doc*)mem_alloc_cpy(variable, doc, 1);
+        break;
+
+        case dt_bool:
+            copy = (doc*)mem_alloc_cpy(variable, doc_bool, 1);
+        break;
+
+        case dt_double:
+            copy = (doc*)mem_alloc_cpy(variable, doc_double, 1);
+        break;
+        
+        case dt_float:
+            copy = (doc*)mem_alloc_cpy(variable, doc_float, 1);
+        break;
+
+        case dt_uint:
+            copy = (doc*)mem_alloc_cpy(variable, doc_uint_t, 1);
+        break;
+
+        case dt_uint64:
+            copy = (doc*)mem_alloc_cpy(variable, doc_uint64_t, 1);
+        break;
+
+        case dt_uint32:
+            copy = (doc*)mem_alloc_cpy(variable, doc_uint32_t, 1);
+        break;
+
+        case dt_uint16:
+            copy = (doc*)mem_alloc_cpy(variable, doc_uint16_t, 1);
+        break;
+
+        case dt_uint8:
+            copy = (doc*)mem_alloc_cpy(variable, doc_uint8_t, 1);
+        break;
+
+        case dt_int:
+            copy = (doc*)mem_alloc_cpy(variable, doc_int, 1);
+        break;
+
+        case dt_int64:
+            copy = (doc*)mem_alloc_cpy(variable, doc_int64_t, 1);
+        break;
+
+        case dt_int32:
+            copy = (doc*)mem_alloc_cpy(variable, doc_int32_t, 1);
+        break;
+
+        case dt_int16:
+            copy = (doc*)mem_alloc_cpy(variable, doc_int16_t, 1);
+        break;
+
+        case dt_int8:
+            copy = (doc*)mem_alloc_cpy(variable, doc_int8_t, 1);
+        break;
+
+        case dt_string:
+            copy = (doc*)mem_alloc_cpy(variable, doc_string, 1);
+            ((doc_string*)copy)->string = (char*)mem_alloc_cpy(((doc_string*)variable)->string, char, ((doc_string*)variable)->len);
+        break;
+
+        case dt_const_string:
+            copy = (doc*)mem_alloc_cpy(variable, doc_string, 1);
+        break;
+
+        case dt_bindata:
+            copy = (doc*)mem_alloc_cpy(variable, doc_bindata, 1);
+            ((doc_bindata*)copy)->data = (uint8_t*)mem_alloc_cpy(((doc_bindata*)variable)->data, uint8_t, ((doc_bindata*)variable)->len);
+        break;
+
+        case dt_const_bindata:
+            copy = (doc*)mem_alloc_cpy(variable, doc_bindata, 1);
+        break;
+    }
+
+    copy->next = NULL;
+    copy->prev = NULL;
+    copy->parent = NULL;
+    copy->name = mem_alloc_cpy(variable->name, char, strlen(variable->name) + 1);
+    if(copy->type != dt_array && copy->type != dt_obj){
+        copy->child = NULL;
+        copy->childs = 0;
+    }
+
+    errno_doc_code_internal = errno_doc_ok;
+    return copy;
+}
+
+// rename variable
+void doc_rename(doc *variable, char *name, char *new_name){
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_msg_doc_internal  = variable->name;
+        return;
+    }
+
+    variable = get_variable_ptr(variable, name);
+
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
+    
+    free(variable->name);
+    variable->name = (char*)mem_alloc_cpy(new_name, char, strlen(new_name) + 1);
+}

@@ -403,6 +403,6 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param type: type of the data, C keyword types
  * @param new_value: value to be set
  */
-#define doc_set_value(obj, name, type, new_value)  ( ((doc_##type*)__check_obj_is_value(doc_get(__check_obj(obj),name)))->value = new_value )
+#define doc_set(obj, name, type, new_value)  ( ((doc_##type*)__check_obj_is_value(doc_get(__check_obj(obj),name)))->value = new_value )
 
 #endif

@@ -61,7 +61,7 @@ int main(int argc, char **argv){
     printf("Value before: %f.\n", value);
 
     // alter member value
-    doc_set_value(obj, "pontos.p3", double, 130.0);
+    doc_set(obj, "pontos.p3", double, 130.0);
 
     value = doc_get_value(ptr, double); 
 
