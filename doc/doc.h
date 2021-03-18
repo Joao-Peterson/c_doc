@@ -269,7 +269,7 @@ typedef struct{
 // Macro checking ----------------------------------
 
 /**
- * @brief check if obj is null, if it is, returns a dummy doc 
+ * @brief internal function, check if obj is null, if it is, returns a dummy doc 
  * to be written to by some macros that would segfault on a null pointer
  * @param obj: pointer to doc
  * @return the object itself or a dummy in case obj is null
@@ -277,7 +277,7 @@ typedef struct{
 doc *__check_obj(doc *obj); 
 
 /**
- * @brief check if obj is null and if it is a value type, if it is, returns a dummy doc 
+ * @brief internal function, check if obj is null and if it is a value type, if it is, returns a dummy doc 
  * to be written to by some macros that would segfault on a null pointer
  * @param obj: pointer to doc
  * @return the object itself or a dummy in case obj is null or non value type
@@ -290,6 +290,11 @@ doc *__check_obj_is_value(doc *obj);
  */
 int __doc_get_error_code(void);
 
+/**
+ * @brief internal function, check if obj is a object or array and if it is NULL
+ * if not return its first child, else return NULL.
+ */
+doc *__check_obj_ite_macro(doc *obj);
 
 // Doc functions -----------------------------------
 
@@ -401,28 +406,28 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param type: type of the data, C keyword types
  * @return the actual value
  */
-#define doc_get(obj, name, type)          (((doc_##type*)doc_get_ptr(obj, name))->value)
+#define doc_get(obj, name, type) (((doc_##type*)doc_get_ptr(obj, name))->value)
 
 /**
  * @brief gets the string pointer from a doc instance
  * @param obj: pointer to the string instance
  * @return pointer to string
  */
-#define doc_get_string(obj)         ( (((doc_string*)__check_obj(obj))->string) )
+#define doc_get_string(obj) ( (((doc_string*)__check_obj(obj))->string) )
 
 /**
  * @brief gets the string len from a doc instance
  * @param obj: pointer to the string instance
  * @return string length
  */
-#define doc_get_string_len(obj)     (((doc_string*)__check_obj(obj))->len)
+#define doc_get_string_len(obj) (((doc_string*)__check_obj(obj))->len)
 
 /**
  * @brief gets the binary data len from a doc instance
  * @param obj: pointer to the data instance
  * @return pointer to binary data
  */
-#define doc_get_bindata(obj)        (   (__check_obj(obj)->type == dt_bindata) ? (uint8_t*)(((doc_bindata*)__check_obj(obj))->data) : (const uint8_t*)(((doc_bindata*)__check_obj(obj))->data)   )
+#define doc_get_bindata(obj) (   (__check_obj(obj)->type == dt_bindata) ? (uint8_t*)(((doc_bindata*)__check_obj(obj))->data) : (const uint8_t*)(((doc_bindata*)__check_obj(obj))->data)   )
 
 /**
  * @brief gets the binary data len from a doc instance
@@ -430,7 +435,7 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @return size_t length   
  * @return binary data length
  */
-#define doc_get_bindata_len(obj)    (((doc_bindata*)__check_obj(obj))->len)
+#define doc_get_bindata_len(obj) (((doc_bindata*)__check_obj(obj))->len)
 
 /**
  * @brief sets the new value for a instance
@@ -439,6 +444,14 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param type: type of the data, C keyword types
  * @param new_value: value to be set
  */
-#define doc_set(obj, name, type, new_value)  ( ((doc_##type*)__check_obj_is_value(doc_get_ptr(__check_obj(obj),name)))->value = new_value )
+#define doc_set(obj, name, type, new_value) ( ((doc_##type*)__check_obj_is_value(doc_get_ptr(__check_obj(obj),name)))->value = new_value )
+
+/**
+ * @brief creates a iterator for a object or array to be used on a for loop
+ * @note Eg. "for(doc_ite(member, object)){ printf("%s\n", member->name); }"
+ * @param iterator: name for the iterator variable, has implicity type "doc*"
+ * @param obj_or_array: object or array that contains the members to be looped
+ */
+#define doc_ite(iterator, obj_or_array) doc* iterator = __check_obj_ite_macro(obj_or_array); iterator != NULL; iterator = iterator->next
 
 #endif

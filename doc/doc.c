@@ -86,8 +86,8 @@ const errno_doc_t errno_doc_msg_code_array[] = {
 
 // allocate and copy data
 void *_mem_alloc_cpy(void *data, size_t size, size_t elements){
-    void *buffer = calloc(1, size);
-    memcpy(buffer, data, size);
+    void *buffer = calloc(1, size*elements);
+    memcpy(buffer, data, size*elements);
     return buffer;
 }
 
@@ -448,6 +448,13 @@ int __doc_get_error_code(void){
     return errno_doc_code_internal;
 }
 
+// check object for the for loop iterator macro
+doc *__check_obj_ite_macro(doc *obj){
+    if (obj == NULL || (obj->type != dt_obj && obj->type != dt_array))
+        return NULL;
+    else
+        return obj->child;
+}
 
 /* ----------------------------------------- Functions -------------------------------------- */
 
@@ -754,6 +761,7 @@ doc *doc_copy(doc *variable, char *name){
                     last_member->next = member;
                 }
 
+                last_member = member;
                 cursor = cursor->next;
             }
 

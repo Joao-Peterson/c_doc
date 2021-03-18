@@ -78,6 +78,10 @@ int main(int argc, char **argv){
     doc_add(obj, "pontos", "p5", dt_double, 50.0);
     log("Error_check: %s\n",doc_get_error_msg());
 
+    // check add of a non value
+    doc_add(obj, ".", "p_null", dt_null);
+    log("Error_check: %s\n",doc_get_error_msg());
+
     // check add on non addable objects
     doc_add(obj, "pontos", "p5", dt_double, 50.0);
     log("Error_check: %s\n",doc_get_error_msg());
@@ -110,7 +114,7 @@ int main(int argc, char **argv){
     log("Error_check: %s\n",doc_get_error_msg());
     double copy_member = doc_get(copy_obj, "p2", double);
     log("Error_check: %s\n",doc_get_error_msg());
-    log("Copied memeber: %f\n", copy_member);
+    log("Copied member: %f\n", copy_member);
 
     // append obj variable
     doc_rename(copy_obj, ".", "pontos_new");
@@ -121,7 +125,12 @@ int main(int argc, char **argv){
     log("Error_check: %s\n",doc_get_error_msg());
     log("Copy Append value: %f\n", copy_append_value);
 
+    // check iterator functionality
+    for(doc_ite(cursor, obj)){
+        printf("Member loop: %s\n", cursor->name);
+    }
 
+    // 
 
     // delete all, but can be any instance
     doc_delete(obj,".");
