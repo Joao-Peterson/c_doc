@@ -2,7 +2,20 @@
 #include <stdlib.h>
 #include "doc/doc.h"
 
-#define log(const_format_str, ...)  printf("[%s:%i] " const_format_str, __FILE__, __LINE__, ##__VA_ARGS__)
+// #define LOG_DISABLE
+
+#ifndef LOG_DISABLE
+    #define log(const_format_str, ...)  printf("[%s:%i] " const_format_str, __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+    #define log(const_format_str, ...)  
+#endif
+
+#define STRUCT_NAME struct_ex_t
+#define STRUCT_MEMBERS \
+    X(int, value1)\
+    X(int, value2)\
+    X(double, value3)
+#include "doc_struct.h"
 
 int main(int argc, char **argv){
 
@@ -127,13 +140,25 @@ int main(int argc, char **argv){
 
     // check iterator functionality
     for(doc_ite(cursor, obj)){
-        printf("Member loop: %s\n", cursor->name);
+        log("Member loop: %s\n", cursor->name);
     }
 
-    // 
+    // interfaces with structs
+    struct_ex_t custom_struct = {.value1 = 20, .value2 = 44, .value3 = 69.0};
+
+    doc *struct_doc = doc_struct_new_struct_ex_t(custom_struct);    
+    double struct_value = doc_get(struct_doc, "value3", double);
+    log("Error_check: %s\n",doc_get_error_msg());
+    printf("struct value: %f\n", struct_value);
+
+    custom_struct.value3 = 75.0;
+    doc_struct_set_struct_ex_t(custom_struct, struct_doc);
+    struct_value = doc_get(struct_doc, "value3", double);
+    log("Error_check: %s\n",doc_get_error_msg());
+    printf("struct value: %f\n", struct_value);
 
     // delete all, but can be any instance
     doc_delete(obj,".");
 
     return 0;
-}   
+}
