@@ -59,7 +59,7 @@ dist : $(OBJS_BUILD)
 
 
 main: 
-	$(CC) $(OBJS_BUILD) $(BUILD_DIR)/$(TEST_OBJ) -o $(EXE)
+	$(CC) $(OBJS_BUILD) $(BUILD_DIR)$(TEST_OBJ) -o $(EXE)
 
 
 # pack : 
@@ -68,5 +68,5 @@ main:
 
 clear : 
 	@rm -f $(OBJS_BUILD)
-	@rm -f $(BUILD_DIR)/$(TEST_OBJ)
+	@rm -f $(BUILD_DIR)$(TEST_OBJ)
 	@rm -f $(DIST_DIR)$(LIB_NAME)

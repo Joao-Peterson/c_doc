@@ -52,18 +52,15 @@ int main(int argc, char **argv){
         ";"
     );
 
-    // get pointer to a member on dynamic object
-    doc *ptr = doc_get(obj, "pontos.p3");
-
-    // retrive
-    double value = doc_get_value(ptr, double); 
+    // get value
+    double value = doc_get(obj, "pontos.p3", double);
 
     printf("Value before: %f.\n", value);
 
     // alter member value
     doc_set(obj, "pontos.p3", double, 130.0);
 
-    value = doc_get_value(ptr, double); 
+    value = doc_get(obj, "pontos.p3", double); 
 
     printf("Value after: %f.\n", value);
 

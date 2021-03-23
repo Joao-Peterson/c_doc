@@ -54,3 +54,9 @@ void CAT(doc_struct_set_, STRUCT_NAME)(STRUCT_NAME struct_instance, doc *doc_str
     STRUCT_MEMBERS
     #undef X
 }
+
+void CAT(doc_struct_get_, STRUCT_NAME)(STRUCT_NAME *struct_instance, doc *doc_struct){
+    #define X(type, member) struct_instance->member = doc_get(doc_struct, #member, type); 
+    STRUCT_MEMBERS
+    #undef X
+}

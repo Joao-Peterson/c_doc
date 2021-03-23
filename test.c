@@ -149,13 +149,17 @@ int main(int argc, char **argv){
     doc *struct_doc = doc_struct_new_struct_ex_t(custom_struct);    
     double struct_value = doc_get(struct_doc, "value3", double);
     log("Error_check: %s\n",doc_get_error_msg());
-    printf("struct value: %f\n", struct_value);
+    printf("struct value3: %f\n", struct_value);
 
     custom_struct.value3 = 75.0;
     doc_struct_set_struct_ex_t(custom_struct, struct_doc);
     struct_value = doc_get(struct_doc, "value3", double);
     log("Error_check: %s\n",doc_get_error_msg());
-    printf("struct value: %f\n", struct_value);
+    printf("struct value3: %f\n", struct_value);
+
+    doc_set(struct_doc, "value2", int , 100);
+    doc_struct_get_struct_ex_t(&custom_struct, struct_doc);
+    printf("struct value2: %i\n", custom_struct.value2);
 
     // delete all, but can be any instance
     doc_delete(obj,".");
