@@ -21,11 +21,11 @@ Version: v1.4
 * [Error checking](#error-checking)
 * [Struct interfaces](#struct-interfaces)
 * [Parse and Stringify](#parse-and-stringify)
+    * [JSON](#json)
 
 ### Compilation
 
-To compile this library simply compile the source with the header, no dependencies.
-There a make file, simply type `make release` and the lib should be compiled to the directory [dist](./dist).
+Just alter the [Makefile](./Makefile) as needed and run `make release` and the lib should be compiled to the directory [dist](./dist).
 
 ### Use
 
@@ -65,9 +65,9 @@ Starting by creating a new object:
     ); 
 ```
 
-The syntax is, name, type and then value or values, if any. Objects and arrays must have a ";" terminator character.
-Arrays only hold members of the same type. Members dt_null don't have a value. dt_string, dt_const_string, dt_bindata and
-dt_const_bindata have a extra value, the length *size_t*. dt_const_ instances have pointers to const data in memory, so the library
+The syntax is, name, type and then value or values, if any. Objects and arrays must have a *";"* terminator character.
+Arrays only hold members of the same type. Members dt_null don't have a value. *dt_string*, *dt_const_string*, *dt_bindata* and
+*dt_const_bindata* have a extra value, the length *size_t*. *dt_const_* instances have pointers to const data in memory, so the library
 doesn't free its memory when a *doc_delete()* call occurs. 
 
 You can add extra data to existing ones:
@@ -81,7 +81,7 @@ You can add extra data to existing ones:
         ";"
     );
 ```
-Here you can see the second argument ".", reffers to a instance, in this case "." is the instance of the object itself, "velocidades". But you can specify any instance inside, the syntax is "member.member.member.member" and so on. 
+Here you can see the second argument *"."*, reffers to a instance, in this case *"."* is the instance of the object itself, "velocidades". But you can specify any instance inside, the syntax is "member.member.member.member" and so on. 
 
 You can then get a value using a agnostic type call:
 
@@ -155,7 +155,7 @@ Null values also exist.
 
 List are objects and arrays, both are basically the same expect that arrays have typechecking, making for correctness. Also, arrays have anonymous members, although we can name then.
 
-They should have a espace sequence at the end, denoted by *";"*, so the argument list know where to stop parsing.
+They should have a escape sequence at the end, denoted by *";"*, so the argument list know where to stop parsing.
 
 They can also be defined empty.
 
@@ -215,8 +215,8 @@ They can also be defined empty.
 
 ### Functions
 
-This library implements a basic CRUD interaction, along with add, copy and append. All functions, expect for *doc_new* and the error functions,
-need a pointer to the doc data type and and value reference, or value name, kinda like refrering to a member inside a object. Ex:
+This library implements a basic CRUD, along with add, copy and append. All functions, expect for *doc_new* and the error functions,
+need a pointer to the doc data type and a value reference, or value name, kinda like refeering to a member inside a object. Ex:
 
 ```c
     "object.value_parent.value_child"
@@ -228,7 +228,7 @@ Or if you are refeering to the object itself, use a dot.
     "."
 ```
 
-To create you use *doc_new*, this gives you a pointer to this value, and this pointer should be used to any other calls, as well as delete.
+To create you call *doc_new*, this gives you a pointer to this value, and this pointer should be used to any other calls, as well as delete.
 
 ```c
     doc *new_doc = doc_new(
@@ -238,19 +238,19 @@ To create you use *doc_new*, this gives you a pointer to this value, and this po
     );
 ```
 
-To read you use *doc_get*, it needs a type to work.
+To read you call *doc_get*, it needs a type to work.
 
 ```c
     int value = doc_get(new_doc, "value", int);
 ```
 
-To update you use *doc_set*, it also needs a type, and a value.
+To update you call *doc_set*, it also needs a type, and a value.
 
 ```c
     doc_set(new_doc, "value", int, 12);
 ```
 
-To delete you use *doc_delete*. It deletes from the reference pointer downwards, recursively.
+To delete you call *doc_delete*. It deletes from the reference pointer downwards, recursively.
 
 ```c
     doc_delete(new_doc, ".");
@@ -385,6 +385,8 @@ Now you can create, read and write to a doc structure from a struct and vice ver
 ### Parse and Stringify
 
 The doc data structure has been made with a main idea in mind, ease handling of markdown files, widely used for data transmission, configuration data, encapsulate data, organize, and so on. So it's pretty easy to parse and create files to and from the data structure. 
+
+#### JSON
 
 For a json file format, it goes like this:
 
