@@ -17,6 +17,7 @@ Version: v1.4
     * [Value](#values)
     * [Lists](#lists)
 * [Functions](#functions)
+* [Iteration](#interation)
 * [Error checking](#error-checking)
 * [Struct interfaces](#struct-interfaces)
 * [Parse and Stringify](#parse-and-stringify)
@@ -295,6 +296,18 @@ You can also get references to values using *doc_get_ptr*
     doc *doc_value = doc_get_ptr(new_doc, "value");
     int value = doc_get(doc_value, ".", int);
 ```
+
+### Iteration
+
+This library provides a macro for doing iteration over a object or array.
+
+```c
+    for(doc_ite(cursor, obj)){
+        printf("Member loop: %s\n", cursor->name);
+    }
+```
+The *doc_ite* sits inside the for loop, where *cursor* is the name of the iterator and *obj* the object to be iterated over. Cursor has type
+*doc* that is equal to a child of *obj*, therefore we can access the members value, like in the example where we can printf the names of the objects.
 
 ### Error checking
 
