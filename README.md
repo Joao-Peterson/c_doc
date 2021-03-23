@@ -24,7 +24,7 @@ Version: v1.4
 ### Compilation
 
 To compile this library simply compile the source with the header, no dependencies.
-There a make file, simply type `make release` and the lib should be compiled to the directory [dist](./dist) 
+There a make file, simply type `make release` and the lib should be compiled to the directory [dist](./dist).
 
 ### Use
 
