@@ -6,13 +6,17 @@ CC := gcc
 C_FLAGS :=
 
 I_FLAGS :=
+I_FLAGS += -Idoc
 
 L_FLAGS :=
 
-SOURCES := doc/doc.c doc/doc_json.c base64/base64.c
-HEADERS := doc/doc.h doc/doc_json.h
+EXE:= main.exe
 
-VERSION := 1.0
+SOURCES := doc/doc.c doc/doc_json.c base64/base64.c
+TEST_SOURCE := test.c
+HEADERS := doc/doc.h doc/doc_json.h doc/doc_struct.h
+
+VERSION := 1.4
 
 LIB_NAME := libdoc.a
 DIST_NAME := C_doc_Win_x86_64_$(VERSION).tar.gz
@@ -31,16 +35,19 @@ TAR := tar -c -v -z -f
 
 OBJS := $(SOURCES:.c=.o)
 OBJS_BUILD := $(addprefix $(BUILD_DIR), $(notdir $(SOURCES:.c=.o)))
+TEST_OBJ := $(TEST_SOURCE:.c=.o)
 
 # ---------------------------------------------------------------
 
 .PHONY : build
 
 build : C_FLAGS += -g
-build : $(OBJS)
+build : $(TEST_OBJ)
+build : $(OBJS) main
 
-release : C_FLAGS += -O3
+release : C_FLAGS += -O2
 release : $(OBJS) dist
+
 
 %.o : %.c
 	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $(addprefix $(BUILD_DIR), $(notdir $@))
@@ -50,9 +57,16 @@ dist : $(OBJS_BUILD)
 	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $^
 	cp $(HEADERS) $(DIST_DIR)
 
+
+main: 
+	$(CC) $(OBJS_BUILD) $(BUILD_DIR)$(TEST_OBJ) -o $(EXE)
+
+
 # pack : 
 # 	$(TAR) $(DIST_NAME) 
 
+
 clear : 
 	@rm -f $(OBJS_BUILD)
+	@rm -f $(BUILD_DIR)$(TEST_OBJ)
 	@rm -f $(DIST_DIR)$(LIB_NAME)
