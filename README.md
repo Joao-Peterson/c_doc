@@ -24,8 +24,7 @@ Version: v1.4
 ### Compilation
 
 To compile this library simply compile the source with the header, no dependencies.
-Arquive if static compile or compile as shared and you can use in your projects, or as i like, compile the source into a object
-and link it with your main application in compilation or linking step.
+There a make file, simply type `make release` and the lib should be compiled to the directory [dist](./dist) 
 
 ### Use
 
