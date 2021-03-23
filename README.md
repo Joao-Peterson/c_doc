@@ -17,7 +17,7 @@ Version: v1.4
     * [Value](#values)
     * [Lists](#lists)
 * [Functions](#functions)
-* [Iteration](#interation)
+* [Iteration](#iteration)
 * [Error checking](#error-checking)
 * [Struct interfaces](#struct-interfaces)
 * [Parse and Stringify](#parse-and-stringify)
