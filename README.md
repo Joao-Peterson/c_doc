@@ -228,12 +228,13 @@ Or if you are refeering to the object itself, use a dot.
     "."
 ```
 
-To create you call *doc_new*, this gives you a pointer to this value, and this pointer should be used to any other calls, as well as delete.
+To create you call *doc_new*, this gives you a pointer to this value, and this pointer should be used to any other calls, as well as delete. Also, any values added using *doc_new* or *doc_add* will copy the name to memory before, so the original string can be freed.
 
 ```c
     doc *new_doc = doc_new(
         "object", dt_obj,
             "value", dt_int, 24,
+            "string", dt_string, "Hello world", 12ULL, 
         ";"
     );
 ```
@@ -244,10 +245,22 @@ To read you call *doc_get*, it needs a type to work.
     int value = doc_get(new_doc, "value", int);
 ```
 
-To update you call *doc_set*, it also needs a type, and a value.
+The *doc_get* call is valid for any type except for strings and binary data, for this case you should use *doc_get_string* and *doc_get_bindata*.
+
+```c
+    char *get_string = doc_get_string(new_doc, "string");
+```
+
+You can also get the size of a string or binary data using *doc_get_string_len* or *doc_get_bindata_size*.
+
+To update a value you can call *doc_set*, it also needs a type, and a value with the type being the same as the original, using a different type will not change it to a new one.
 
 ```c
     doc_set(new_doc, "value", int, 12);
+```
+
+```c
+    doc_set_string(new_doc, "string", "Setting this string", 20ULL);
 ```
 
 To delete you call *doc_delete*. It deletes from the reference pointer downwards, recursively.
@@ -297,6 +310,18 @@ You can also get references to values using *doc_get_ptr*
     int value = doc_get(doc_value, ".", int);
 ```
 
+For ease interaction there is a *doc_rename* call that alters the name of a value.
+
+```c
+    doc_rename(new_doc, "powers", "powers_of_two");
+```
+
+You can also get the amount of members inside a object or array using *doc_childs_amount*.
+
+```c
+    int powers_size = doc_childs_amount(new_doc, "powers");
+```
+
 ### Iteration
 
 This library provides a macro for doing iteration over a object or array.
@@ -332,7 +357,7 @@ This enum has all the errors listed.
         errno_doc_value_not_same_type_as_array                                                                                      = -3,
         errno_doc_duplicate_names                                                                                                   = -4,
         errno_doc_null_passed_obj                                                                                                   = -5,
-        errno_doc_obj_not_found                                                                                                     = -6,
+        errno_doc_value_not_found                                                                                                     = -6,
         errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator                                                = -7,
         errno_doc_trying_to_add_new_data_to_non_object_or_non_array                                                                 = -8,
         errno_doc_trying_to_set_value_of_non_value_type_data_type                                                                   = -9,

@@ -36,12 +36,13 @@ typedef enum{
     errno_doc_value_not_same_type_as_array                                                                                      = -3,
     errno_doc_duplicate_names                                                                                                   = -4,
     errno_doc_null_passed_obj                                                                                                   = -5,
-    errno_doc_obj_not_found                                                                                                     = -6,
+    errno_doc_value_not_found                                                                                                   = -6,
     errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator                                                = -7,
     errno_doc_trying_to_add_new_data_to_non_object_or_non_array                                                                 = -8,
-    errno_doc_trying_to_set_value_of_non_value_type_data_type                                                                   = -9,
-    errno_doc_trying_to_set_string_of_non_string_data_type                                                                      = -10,
-    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                                                                    = -11
+    errno_doc_trying_to_get_data_from_non_object_or_non_array                                                                   = -9,
+    errno_doc_trying_to_set_value_of_non_value_type_data_type                                                                   = -10,
+    errno_doc_trying_to_set_string_of_non_string_data_type                                                                      = -11,
+    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                                                                    = -12
 }errno_doc_code_t;
 
 /* ----------------------------------------- Private Struct's --------------------------------- */
@@ -74,9 +75,10 @@ const errno_doc_t errno_doc_msg_code_array[] = {
     ERR_TO_STRUCT(errno_doc_value_not_same_type_as_array),
     ERR_TO_STRUCT(errno_doc_duplicate_names),
     ERR_TO_STRUCT(errno_doc_null_passed_obj),
-    ERR_TO_STRUCT(errno_doc_obj_not_found),
+    ERR_TO_STRUCT(errno_doc_value_not_found),
     ERR_TO_STRUCT(errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator),
     ERR_TO_STRUCT(errno_doc_trying_to_add_new_data_to_non_object_or_non_array),
+    ERR_TO_STRUCT(errno_doc_trying_to_get_data_from_non_object_or_non_array),
     ERR_TO_STRUCT(errno_doc_trying_to_set_value_of_non_value_type_data_type),
     ERR_TO_STRUCT(errno_doc_trying_to_set_string_of_non_string_data_type),
     ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type)
@@ -297,10 +299,10 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                 case dt_const_bindata:
                     variable = calloc(1,sizeof(doc_bindata)); // for strings or bin_data, the allocation doesn't matter, just the type variable being of the correct type
                     // order of assignement to len and data matters, should be the same as in the struct declaration
-                    ((doc_bindata*)variable)->len = va_arg(*arg_list, size_t); 
                     ((doc_bindata*)variable)->data = va_arg(*arg_list, uint8_t*);
+                    ((doc_bindata*)variable)->len = va_arg(*arg_list, size_t); 
 
-                    if(((doc_bindata*)variable)->len >= 0x0000000100000000){
+                    if(((doc_bindata*)variable)->len > 0x0000000100000000){
                         errno_doc_code_internal = errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first;
                         errno_msg_doc_internal = name;
                     }
@@ -316,7 +318,7 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
                     ((doc_bindata*)variable)->data = calloc(((doc_bindata*)variable)->len + 1, sizeof(uint8_t)); 
                     memcpy(((doc_bindata*)variable)->data, buffer, ((doc_bindata*)variable)->len + 1);
 
-                    if(((doc_bindata*)variable)->len >= 0x0000000100000000){
+                    if(((doc_bindata*)variable)->len > 0x0000000100000000){
                         errno_doc_code_internal = errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first;
                         errno_msg_doc_internal = name;
                     }
@@ -620,7 +622,7 @@ doc* doc_get_ptr(doc* object_or_array, char *name){
     doc *variable = get_variable_ptr(object_or_array, name);
 
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_doc_code_internal = errno_doc_value_not_found;
         errno_msg_doc_internal  = name;
         return NULL; 
     }
@@ -666,14 +668,28 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len){
 }
 
 // get array and obj childs amount
-childs_amount_t doc_childs_amount(doc *object_or_array){
+childs_amount_t doc_get_childs_amount(doc *object_or_array, char *name){
     if(object_or_array == NULL){
         errno_doc_code_internal = errno_doc_null_passed_obj;
         errno_msg_doc_internal = NULL;
         return 0;
     }
     
-    return object_or_array->childs;
+    doc *var = get_variable_ptr(object_or_array, name);
+
+    if(var == NULL){
+        errno_doc_code_internal = errno_doc_value_not_found;
+        errno_msg_doc_internal = name;
+        return 0;
+    }
+
+    if(var->type != dt_obj && var->type != dt_array){
+        errno_doc_code_internal = errno_doc_trying_to_get_data_from_non_object_or_non_array;
+        errno_msg_doc_internal = name;
+        return 0;
+    }
+
+    return var->childs;
 }
 
 // appends a already made variable to a object or array
@@ -687,7 +703,7 @@ void doc_append(doc *object_or_array, char *name, doc *variable){
     doc *obj = get_variable_ptr(object_or_array, name);
 
     if(obj == NULL){
-        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_doc_code_internal = errno_doc_value_not_found;
         errno_msg_doc_internal = name;
         return;
     }
@@ -728,7 +744,7 @@ doc *doc_copy(doc *variable, char *name){
     variable = get_variable_ptr(variable, name);
 
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_doc_code_internal = errno_doc_value_not_found;
         errno_msg_doc_internal = name;
         return NULL;
     }
@@ -866,7 +882,7 @@ void doc_rename(doc *variable, char *name, char *new_name){
     variable = get_variable_ptr(variable, name);
 
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_obj_not_found;
+        errno_doc_code_internal = errno_doc_value_not_found;
         errno_msg_doc_internal = name;
         return;
     }

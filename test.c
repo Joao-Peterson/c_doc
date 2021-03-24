@@ -31,7 +31,7 @@ int main(int argc, char **argv){
                 "p4", dt_double, 22.0,
             ";",
             "integer", dt_uint8, 255,
-            "packets", dt_const_bindata, "void_ptr", 9,
+            "packets", dt_const_bindata, "void_ptr", 9ULL,
             "future_value", dt_null,
             "some_object", dt_obj,
             ";",
@@ -47,6 +47,7 @@ int main(int argc, char **argv){
                 dt_uint8, 252,
                 dt_uint8, 253,
             ";",
+            "string", dt_string, "hello_world", 12ULL,
         ";"
     ); 
 
@@ -102,6 +103,24 @@ int main(int argc, char **argv){
     // check add value on array, with different type
     doc_add(obj, "pontos", "p6", dt_int, 64);
     log("Error_check: %s\n",doc_get_error_msg());
+
+    // check get childs amount
+    size_t obj_size = doc_get_childs_amount(obj, "."); 
+    log("Error_check: %s\n",doc_get_error_msg());
+    log("Obj size: %u\n", obj_size);
+
+    // get string and bindata
+    uint8_t *bindata_test = doc_get_bindata(obj, "packets");
+    log("Error_check: %s\n",doc_get_error_msg());
+    size_t bindata_size = doc_get_bindata_size(obj, "packets");
+    log("Error_check: %s\n",doc_get_error_msg());
+    log("packets size: %u\n", bindata_size);
+
+    char *string_test = doc_get_string(obj, "string");
+    log("Error_check: %s\n",doc_get_error_msg());
+    size_t string_size = doc_get_string_len(obj, "string");
+    log("Error_check: %s\n",doc_get_error_msg());
+    log("string: \"%s\" - size: %u\n", string_test, string_size);
 
     // copy value variables
     doc *copy = doc_copy(obj, "pontos.p3");

@@ -368,7 +368,7 @@ void doc_rename(doc *variable, char *name, char *new_name);
  * @param object_or_array: pointer to existing object
  * @return amount of childs
  */
-childs_amount_t doc_childs_amount(doc *object_or_array);
+childs_amount_t doc_get_childs_amount(doc *object_or_array, char *name);
 
 /**
  * @brief set string data pointer and string len
@@ -413,21 +413,21 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param obj: pointer to the string instance
  * @return pointer to string
  */
-#define doc_get_string(obj) ( (((doc_string*)__check_obj(obj))->string) )
+#define doc_get_string(obj, name) ( (((doc_string*)doc_get_ptr(obj, name))->string) )
 
 /**
  * @brief gets the string len from a doc instance
  * @param obj: pointer to the string instance
  * @return string length
  */
-#define doc_get_string_len(obj) (((doc_string*)__check_obj(obj))->len)
+#define doc_get_string_len(obj, name) (((doc_string*)doc_get_ptr(obj, name))->len)
 
 /**
  * @brief gets the binary data len from a doc instance
  * @param obj: pointer to the data instance
  * @return pointer to binary data
  */
-#define doc_get_bindata(obj) (   (__check_obj(obj)->type == dt_bindata) ? (uint8_t*)(((doc_bindata*)__check_obj(obj))->data) : (const uint8_t*)(((doc_bindata*)__check_obj(obj))->data)   )
+#define doc_get_bindata(obj, name) (((doc_bindata*)doc_get_ptr(obj, name))->data)
 
 /**
  * @brief gets the binary data len from a doc instance
@@ -435,7 +435,7 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @return size_t length   
  * @return binary data length
  */
-#define doc_get_bindata_len(obj) (((doc_bindata*)__check_obj(obj))->len)
+#define doc_get_bindata_size(obj, name) (((doc_bindata*)doc_get_ptr(obj, name))->len)
 
 /**
  * @brief sets the new value for a instance
