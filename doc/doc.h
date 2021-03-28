@@ -90,6 +90,26 @@ typedef enum{
     ((type) == dt_bindata)          || \
     ((type) == dt_const_bindata))
 
+/**
+ * @brief error codes
+ */
+typedef enum{
+    errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first     =  1,
+    errno_doc_ok                                                                                                                =  0,
+    errno_doc_not_a_type                                                                                                        = -1,
+    errno_doc_overflow_quantity_members_or_name_is_too_big                                                                      = -2,
+    errno_doc_value_not_same_type_as_array                                                                                      = -3,
+    errno_doc_duplicate_names                                                                                                   = -4,
+    errno_doc_null_passed_obj                                                                                                   = -5,
+    errno_doc_value_not_found                                                                                                   = -6,
+    errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator                                                = -7,
+    errno_doc_trying_to_add_new_data_to_non_object_or_non_array                                                                 = -8,
+    errno_doc_trying_to_get_data_from_non_object_or_non_array                                                                   = -9,
+    errno_doc_trying_to_set_value_of_non_value_type_data_type                                                                   = -10,
+    errno_doc_trying_to_set_string_of_non_string_data_type                                                                      = -11,
+    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                                                                    = -12
+}errno_doc_code_t;
+
 /* ----------------------------------------- Structs ---------------------------------------- */
 
 /**

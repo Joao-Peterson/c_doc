@@ -61,115 +61,193 @@ int main(int argc, char **argv){
 
     // CHECKS
     // check array get() on anonymous members
-    doc *array_member = doc_get_ptr(obj, "matrix[0][1]");
-    log("Error_check: %s\n",doc_get_error_msg());
-    int member_value = doc_get(array_member, ".", int);
-    log("Value: [%u]. Error_check: %s\n", member_value, doc_get_error_msg());
+    int member_value = doc_get(obj, "matrix[0][1]", int);
+    if(doc_error_code)
+        log("[ERROR] Value: [%u]. Error_check: %s\n", member_value, doc_get_error_msg());
+    else
+        log("[OK]\n");
 
     // check [] notation on objs
-    doc *obj_member = doc_get_ptr(obj, "pontos[1]");
-    log("Error_check: %s\n",doc_get_error_msg());
-    double point = doc_get(obj_member, ".", double);
-    log("Value: [%f]. Error_check: %s\n", point, doc_get_error_msg());
+    double point = doc_get(obj, "pontos[1]", double);
+    if(doc_error_code)
+        log("[ERROR] Value: [%f]. Error_check: %s\n", point, doc_get_error_msg());
+    else
+        log("[OK]\n");
 
     // check set_value on non value obj
     doc_set(obj, "future_value", double, 255.8);
-    log("Error_check: %s\n",doc_get_error_msg());
+    if(doc_error_code == errno_doc_trying_to_set_value_of_non_value_type_data_type)
+        log("[OK]\n");
+    else
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
 
     // check add of a single value
     doc_add(obj, "pontos", "p5", dt_double, 50.0);
-    log("Error_check: %s\n",doc_get_error_msg());
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else
+        log("[OK]\n");
 
     // check add of a non value
     doc_add(obj, ".", "p_null", dt_null);
-    log("Error_check: %s\n",doc_get_error_msg());
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else
+        log("[OK]\n");
 
     // check add on non addable objects
-    doc_add(obj, "pontos", "p5", dt_double, 50.0);
-    log("Error_check: %s\n",doc_get_error_msg());
+    doc_add(obj, "pontos.p5", "extra", dt_bool, true);
+    if(doc_error_code == errno_doc_trying_to_add_new_data_to_non_object_or_non_array)
+        log("[OK]\n");
+    else
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
 
     // check add value on array, with different type
     doc_add(obj, "pontos", "p6", dt_int, 64);
-    log("Error_check: %s\n",doc_get_error_msg());
+    if(doc_error_code == errno_doc_value_not_same_type_as_array)
+        log("[OK]\n");
+    else
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
 
     // check get childs amount
     doc_size_t obj_size = doc_get_size(obj, "."); 
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("Obj size: %u\n", obj_size);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n", doc_get_error_msg());
+    else{
+        log("[OK] Obj size: %u\n", obj_size);
+        log("[OK]\n");
+    }
 
     // get string and bindata
     uint8_t *bindata_test = doc_get(obj, "packets", uint8_t*);
-    log("Error_check: %s\n",doc_get_error_msg());
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else
+        log("[OK]\n");
+
     doc_size_t bindata_size = doc_get_size(obj, "packets");
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("packets size: %u\n", bindata_size);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        log("[OK] Packets size: %u\n", bindata_size);
+        log("[OK]\n");
+    }
 
     char *string_test = doc_get(obj, "string", char*);
-    log("Error_check: %s\n",doc_get_error_msg());
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else
+        log("[OK]\n");
+
     doc_size_t string_size = doc_get_size(obj, "string");
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("string: \"%s\" - size: %u\n", string_test, string_size);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        log("[OK] string: \"%s\" - size: %u\n", string_test, string_size);
+        log("[OK]\n");
+    }
 
     // copy value variables
     doc *copy = doc_copy(obj, "pontos.p3");
-    log("Error_check: %s\n",doc_get_error_msg());
-    double copy_value = doc_get(copy, ".", double);
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("Copy value: %f\n", copy_value);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        double copy_value = doc_get(copy, ".", double);
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] Copy value: %f\n", copy_value);
+        log("[OK]\n");
+    }
 
     // append value variable
     doc_set(copy, ".", double, 999.0);
-    log("Error_check: %s\n",doc_get_error_msg());
     // rename check
     doc_rename(copy, ".", "p6");
-    log("Error_check: %s\n",doc_get_error_msg());
-    doc_append(obj, "pontos", copy);
-    log("Error_check: %s\n",doc_get_error_msg());
-    double append_value = doc_get(obj, "pontos.p6", double);
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("Append value: %f\n", append_value);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        log("[OK]\n");
+    }
 
+    doc_append(obj, "pontos", copy);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        double append_value = doc_get(obj, "pontos.p6", double);
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] Append value: %f\n", append_value);
+        log("[OK]\n");
+    }
+    
     // copy obj variables
     doc *copy_obj = doc_copy(obj, "pontos");
-    log("Error_check: %s\n",doc_get_error_msg());
-    double copy_member = doc_get(copy_obj, "p2", double);
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("Copied member: %f\n", copy_member);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        double copy_member = doc_get(copy_obj, "p2", double);
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] Copied member: %f\n", copy_member);
+        log("[OK]\n");
+    }
 
     // append obj variable
     doc_rename(copy_obj, ".", "pontos_new");
     doc_set(copy_obj, "p2", double, 999.0);
     doc_append(obj, ".", copy_obj);
-    log("Error_check: %s\n",doc_get_error_msg());
-    double copy_append_value = doc_get(obj, "pontos_new.p2", double);
-    log("Error_check: %s\n",doc_get_error_msg());
-    log("Copy Append value: %f\n", copy_append_value);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        double copy_append_value = doc_get(obj, "pontos_new.p2", double);
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] Copy Append value: %f\n", copy_append_value);
+        log("[OK]\n");
+    }
 
     // check iterator functionality
     for(doc_ite(cursor, obj)){
-        log("Member loop: %s\n", cursor->name);
+        log("[LOOP] Member loop: %s\n", cursor->name);
     }
 
     // interfaces with structs
     struct_ex_t custom_struct = {.value1 = 20, .value2 = 44, .value3 = 69.0};
 
     doc *struct_doc = doc_struct_new_struct_ex_t(custom_struct);    
-    double struct_value = doc_get(struct_doc, "value3", double);
-    log("Error_check: %s\n",doc_get_error_msg());
-    printf("struct value3: %f\n", struct_value);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        double struct_value = doc_get(struct_doc, "value3", double);
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] struct value3: %f\n", struct_value);
+        log("[OK]\n");
+    }
 
     custom_struct.value3 = 75.0;
     doc_struct_set_struct_ex_t(custom_struct, struct_doc);
-    struct_value = doc_get(struct_doc, "value3", double);
-    log("Error_check: %s\n",doc_get_error_msg());
-    printf("struct value3: %f\n", struct_value);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        double struct_value = doc_get(struct_doc, "value3", double);
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] struct value3: %f\n", struct_value);
+        log("[OK]\n");
+    }
+    
 
     doc_set(struct_doc, "value2", int , 100);
     doc_struct_get_struct_ex_t(&custom_struct, struct_doc);
-    printf("struct value2: %i\n", custom_struct.value2);
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        log("[OK] struct value2: %i\n", custom_struct.value2);
+        log("[OK]\n");
+    }
 
     // delete all, but can be any instance
     doc_delete(obj,".");
+    if(doc_error_code)
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    else{
+        log("[OK]\n");
+    }
 
     return 0;
 }
