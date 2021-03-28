@@ -368,7 +368,7 @@ This enum has all the errors listed.
 
 ### Struct interfaces
 
-An ugly and experimental feature, but sometimes useful, for when you want to quickly add and read data to and from a doc structure from and to a normal struct. 
+An ugly and experimental feature, but sometimes useful, for when you want to quickly add and read data to and from a doc structure from and to a normal struct. Warning, this will only work for the C language types, not user defined with *typedef*, and with non pointer types, as the unary operator will break the preprocessor macros. 
 
 Check it out, you can set two preprocessor symbols with the name and members of your struct, then include the [doc_struct](./doc/doc_struct.h) header file before your code and it will generate the actual struct and calls at compile time.
 

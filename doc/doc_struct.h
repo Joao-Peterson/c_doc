@@ -8,6 +8,8 @@
     #define STRINGFY(x) #x
 #endif
 
+#if defined(STRUCT_MEMBERS) && defined(STRUCT_NAME)
+
 typedef struct{
     #define X(type, member) type member;
     STRUCT_MEMBERS
@@ -60,3 +62,5 @@ void CAT(doc_struct_get_, STRUCT_NAME)(STRUCT_NAME *struct_instance, doc *doc_st
     STRUCT_MEMBERS
     #undef X
 }
+
+#endif
