@@ -32,7 +32,7 @@
 
 /* ----------------------------------------- Typedef's ---------------------------------------- */
 
-typedef uint32_t childs_amount_t;           // type for looping through members inside array's or obj's  
+typedef uint32_t doc_size_t;           // type for looping through members inside array's or obj's  
 
 typedef unsigned int uint_t;                // syntax sugar for getting the values with get_value() macro later
 
@@ -100,7 +100,7 @@ struct doc{
     doc *prev;                              /**< pointer to previous member inside a array or object*/
     doc *child;                             /**< pointer to the first element of this array or object */
     doc *parent;                            /**< pointer to the parent, the instance that define the object or array */
-    childs_amount_t childs;                 /**< quantity of childs */
+    doc_size_t childs;                 /**< quantity of childs */
     doc_type_t type;                        /**< type that describes this instance */
     char *name;                             /**< name of the element */
 };
@@ -368,7 +368,7 @@ void doc_rename(doc *variable, char *name, char *new_name);
  * @param object_or_array: pointer to existing object
  * @return amount of childs
  */
-childs_amount_t doc_get_childs_amount(doc *object_or_array, char *name);
+doc_size_t doc_get_childs_amount(doc *object_or_array, char *name);
 
 /**
  * @brief set string data pointer and string len

@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
 
@@ -151,7 +152,7 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
             char *member_name;
             doc_type_t member_type;
             doc_type_t array_type_check;
-            childs_amount_t i;
+            doc_size_t i;
 
             for(i = 0; true; i++){                                                  // loop trought
 
@@ -373,14 +374,14 @@ doc *get_variable_ptr(doc *object_or_array, char *path){
     
     if((var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
     
-        childs_amount_t index = strtoull(var_name, NULL, 10);
+        doc_size_t index = strtoull(var_name, NULL, 10);
 
         if(index > object_or_array->childs){
             free(name_cpy_base);
             return NULL;
         }
 
-        for(childs_amount_t i = 0ULL; i < index; i++)
+        for(doc_size_t i = 0ULL; i < index; i++)
             cursor = cursor->next;
 
         if(var_name_next == NULL){
@@ -421,27 +422,38 @@ doc *get_variable_ptr(doc *object_or_array, char *path){
 
 // Macro checking ----------------------------------
 
-// check if obj is null, used on macros
-doc *__check_obj(doc *obj){
-    if(obj == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
-        errno_msg_doc_internal = obj->name;
-        return dummy_doc_internal_ptr;
+// check to see if is a string or binary data type
+bool __check_string_bindata(doc *value){
+    switch(value->type){
+        case dt_string:
+        case dt_const_string:
+        case dt_bindata:
+        case dt_const_bindata:
+            return true;
+        break;
+
+        default:
+            return false;
+        break;
     }
-    else
-        return obj;
 }
 
 // check if obj if a value
-doc *__check_obj_is_value(doc *obj){
-    
-    if(obj->type >= dt_double && obj->type <= dt_bool){                             // all values are between dt_double and dt_boll
-        return obj;                                                                 // on the doc_type_t enum
-    }
-    else{
-        errno_doc_code_internal = errno_doc_trying_to_set_value_of_non_value_type_data_type;
-        errno_msg_doc_internal = obj->name;
-        return dummy_doc_internal_ptr;
+doc *__check_obj_is_value(doc *obj){    
+    switch (obj->type)
+    {
+        case dt_array:
+        case dt_obj:
+        case dt_null:
+            errno_doc_code_internal = errno_doc_trying_to_set_value_of_non_value_type_data_type;
+            errno_msg_doc_internal = obj->name;
+            return dummy_doc_internal_ptr;
+        break;
+
+        default:
+            errno_doc_code_internal = errno_doc_ok;
+            return obj;
+        break;
     }
 }
 
@@ -631,51 +643,16 @@ doc* doc_get_ptr(doc* object_or_array, char *name){
     return variable;
 }
 
-// set string pointer and length
-void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len){
-
-    if(obj->type != dt_string && obj->type != dt_const_string){
-        errno_doc_code_internal = errno_doc_trying_to_set_string_of_non_string_data_type;
-        errno_msg_doc_internal = name;
-        return;
-    }
-
-    if(obj->type != dt_const_string){                                               // deallocates non const string
-        free(((doc_string*)get_variable_ptr(obj,name))->string);
-    }
-
-    ((doc_string*)get_variable_ptr(obj,name))->string = new_string;         
-    ((doc_string*)get_variable_ptr(obj,name))->len = new_len; 
-    errno_doc_code_internal = errno_doc_ok;
-}
-
-// set bindata pointer and length
-void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len){
-
-    if(obj->type != dt_bindata && obj->type != dt_const_bindata){
-        errno_doc_code_internal = errno_doc_trying_to_set_bindata_of_non_bindata_data_type;
-        errno_msg_doc_internal = name;
-        return;
-    }
-
-    if(obj->type != dt_const_bindata){                                              // deallocates non const bindata
-        free(((doc_bindata*)get_variable_ptr(obj,name))->data);
-    }
-
-    ((doc_bindata*)get_variable_ptr(obj,name))->data = new_data;            
-    ((doc_bindata*)get_variable_ptr(obj,name))->len = new_len;
-    errno_doc_code_internal = errno_doc_ok;
-}
-
 // get array and obj childs amount
-childs_amount_t doc_get_childs_amount(doc *object_or_array, char *name){
-    if(object_or_array == NULL){
+doc_size_t doc_get_size(doc *value, char *name){
+    if(value == NULL){
         errno_doc_code_internal = errno_doc_null_passed_obj;
         errno_msg_doc_internal = NULL;
         return 0;
     }
     
-    doc *var = get_variable_ptr(object_or_array, name);
+    doc *var = get_variable_ptr(value, name);
+    doc_size_t size;
 
     if(var == NULL){
         errno_doc_code_internal = errno_doc_value_not_found;
@@ -683,13 +660,66 @@ childs_amount_t doc_get_childs_amount(doc *object_or_array, char *name){
         return 0;
     }
 
-    if(var->type != dt_obj && var->type != dt_array){
-        errno_doc_code_internal = errno_doc_trying_to_get_data_from_non_object_or_non_array;
-        errno_msg_doc_internal = name;
-        return 0;
+    switch(var->type){
+        case dt_obj:
+        case dt_array:
+            size = var->childs;
+        break;
+        
+        case dt_string:
+        case dt_const_string:
+        case dt_bindata:
+        case dt_const_bindata:
+            size = ((doc_bindata*)var)->len;
+        break;
+
+        case dt_double:
+            size = sizeof(double);
+        break;
+        case dt_float:
+            size = sizeof(float);
+        break;
+        case dt_uint:
+            size = sizeof(uint_t);
+        break;
+        case dt_uint64:
+            size = sizeof(uint64_t);
+        break;
+        case dt_uint32:
+            size = sizeof(uint32_t);
+        break;
+        case dt_uint16:
+            size = sizeof(uint16_t);
+        break;
+        case dt_uint8:
+            size = sizeof(uint8_t);
+        break;
+        case dt_int:
+            size = sizeof(int);
+        break;
+        case dt_int64:
+            size = sizeof(int64_t);
+        break;
+        case dt_int32:
+            size = sizeof(int32_t);
+        break;
+        case dt_int16:
+            size = sizeof(int16_t);
+        break;
+        case dt_int8:
+            size = sizeof(int8_t);
+        break;
+        case dt_bool:
+            size = sizeof(bool);
+        break;
+
+        case dt_null:
+            size = 0;
+        break;
     }
 
-    return var->childs;
+    errno_doc_code_internal = errno_doc_ok;
+    return size;
 }
 
 // appends a already made variable to a object or array
@@ -762,7 +792,7 @@ doc *doc_copy(doc *variable, char *name){
 
             cursor = copy->child;
 
-            for(childs_amount_t i = 0; i < copy->childs; i++){
+            for(doc_size_t i = 0; i < copy->childs; i++){
                 member = doc_copy(cursor, ".");
                 
                 if(i == 0){

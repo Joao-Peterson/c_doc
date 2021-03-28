@@ -129,7 +129,7 @@ Strings expect a size value.
     doc *example_doc = doc_new("string", dt_string, "Some string", (size_t)12);
 ```
 
-The size has to be a 64 bit values, as the library expects a *size_t* type value, or unsigned long long, as the integer literal *ULL* suggests.
+The size has to be a 64 bit values, as the library expects a *size_t* type value or *doc_size_t* or unsigned long long, as the integer literal *ULL* suggests.
 
 String can also have constant data, *dt_const_string*, that is, they hold a pointer to *const char* data, when we delete with *doc_delete*, the library will know not to deallocate this data, as with *dt_string*, the data will be copied first. 
 
@@ -245,13 +245,11 @@ To read you call *doc_get*, it needs a type to work.
     int value = doc_get(new_doc, "value", int);
 ```
 
-The *doc_get* call is valid for any type except for strings and binary data, for this case you should use *doc_get_string* and *doc_get_bindata*.
+The *doc_get* call is valid for any type, including strings and binary data.
 
 ```c
-    char *get_string = doc_get_string(new_doc, "string");
+    char *get_string = doc_get(new_doc, "string", char*);
 ```
-
-You can also get the size of a string or binary data using *doc_get_string_len* or *doc_get_bindata_size*.
 
 To update a value you can call *doc_set*, it also needs a type, and a value with the type being the same as the original, using a different type will not change it to a new one.
 
@@ -259,9 +257,13 @@ To update a value you can call *doc_set*, it also needs a type, and a value with
     doc_set(new_doc, "value", int, 12);
 ```
 
+For strings and binary data, the call expects a extra parameter, the size or len
+
 ```c
-    doc_set_string(new_doc, "string", "Setting this string", 20ULL);
+    doc_set(new_doc, "string", "Setting this string", 20ULL);
 ```
+
+Be careful with the *doc_get* and *doc_set*, since their use is similar to *va_arg* on variable arguments functions, this calls are bound to error if the types are incorrectly passed. This library implements error checking that can help with some cases, but it will not prevent you, for example, from setting string data onto a int data type, storing the actual address of a char pointer in a integer is valid operation, and you will only see that when you check the integer later on, so be careful.
 
 To delete you call *doc_delete*. It deletes from the reference pointer downwards, recursively.
 
@@ -316,10 +318,14 @@ For ease interaction there is a *doc_rename* call that alters the name of a valu
     doc_rename(new_doc, "powers", "powers_of_two");
 ```
 
-You can also get the amount of members inside a object or array using *doc_childs_amount*.
+You can also get the size of any type with *doc_get_size*, depending on the type the function will return different results. For objects and arrays it will return the amount of children the type has, for strings and bindata it will return the length of the data and of any other type it will return the *sizeof* of that particular type.
 
 ```c
-    int powers_size = doc_childs_amount(new_doc, "powers");
+    int powers_size = doc_get_size(new_doc, "powers");
+```
+
+```c
+    doc_size_t string_size = doc_get_size(obj, "string");
 ```
 
 ### Iteration

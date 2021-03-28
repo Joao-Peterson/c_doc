@@ -57,11 +57,7 @@ int main(int argc, char **argv){
         return -1;
     }
 
-    // CRUDAC - Create Read Update Delete Append Copy
-    // Get ptr
-
-    doc *ptr = doc_get_ptr(obj, "pontos.p1");
-    double value = doc_get(ptr, ".", double);
+    double value = doc_get(obj, "pontos.p1", double);
 
     // CHECKS
     // check array get() on anonymous members
@@ -75,14 +71,6 @@ int main(int argc, char **argv){
     log("Error_check: %s\n",doc_get_error_msg());
     double point = doc_get(obj_member, ".", double);
     log("Value: [%f]. Error_check: %s\n", point, doc_get_error_msg());
-
-    // check set_string on non string
-    doc_set_string(obj, "integer", "bruhhhh", 8);
-    log("Error_check: %s\n",doc_get_error_msg());
-
-    // check set_bindata on non bindata
-    doc_set_bindata(obj, "integer", "bruhhhh", 8);
-    log("Error_check: %s\n",doc_get_error_msg());
 
     // check set_value on non value obj
     doc_set(obj, "future_value", double, 255.8);
@@ -105,20 +93,20 @@ int main(int argc, char **argv){
     log("Error_check: %s\n",doc_get_error_msg());
 
     // check get childs amount
-    size_t obj_size = doc_get_childs_amount(obj, "."); 
+    doc_size_t obj_size = doc_get_size(obj, "."); 
     log("Error_check: %s\n",doc_get_error_msg());
     log("Obj size: %u\n", obj_size);
 
     // get string and bindata
-    uint8_t *bindata_test = doc_get_bindata(obj, "packets");
+    uint8_t *bindata_test = doc_get(obj, "packets", uint8_t*);
     log("Error_check: %s\n",doc_get_error_msg());
-    size_t bindata_size = doc_get_bindata_size(obj, "packets");
+    doc_size_t bindata_size = doc_get_size(obj, "packets");
     log("Error_check: %s\n",doc_get_error_msg());
     log("packets size: %u\n", bindata_size);
 
-    char *string_test = doc_get_string(obj, "string");
+    char *string_test = doc_get(obj, "string", char*);
     log("Error_check: %s\n",doc_get_error_msg());
-    size_t string_size = doc_get_string_len(obj, "string");
+    doc_size_t string_size = doc_get_size(obj, "string");
     log("Error_check: %s\n",doc_get_error_msg());
     log("string: \"%s\" - size: %u\n", string_test, string_size);
 

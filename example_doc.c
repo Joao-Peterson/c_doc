@@ -18,7 +18,7 @@ int main(int argc, char **argv){
                 "p4", dt_double, 22.0,
             ";",
             "integer", dt_uint8, 255,
-            "packets", dt_const_bindata, (void *)some_data_array, (size_t)9,
+            "packets", dt_const_bindata, (void *)some_data_array, (doc_size_t)9,
             "future_value", dt_null,
             "some_object", dt_obj,
             ";",

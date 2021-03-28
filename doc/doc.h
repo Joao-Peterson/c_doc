@@ -18,6 +18,7 @@
 #ifndef _DOC_HEADER_
 #define _DOC_HEADER_
 
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -32,7 +33,7 @@
 
 /* ----------------------------------------- Typedef's ---------------------------------------- */
 
-typedef uint32_t childs_amount_t;           // type for looping through members inside array's or obj's  
+typedef uint32_t doc_size_t;           // type for looping through members inside array's or obj's  
 
 typedef unsigned int uint_t;                // syntax sugar for getting the values with get_value() macro later
 
@@ -100,7 +101,7 @@ struct doc{
     doc *prev;                              /**< pointer to previous member inside a array or object*/
     doc *child;                             /**< pointer to the first element of this array or object */
     doc *parent;                            /**< pointer to the parent, the instance that define the object or array */
-    childs_amount_t childs;                 /**< quantity of childs */
+    doc_size_t childs;                 /**< quantity of childs */
     doc_type_t type;                        /**< type that describes this instance */
     char *name;                             /**< name of the element */
 };
@@ -248,8 +249,8 @@ typedef struct{
  */
 typedef struct{
     doc header;                                 /**< struct inherited of */                                                     
-    size_t len;                                 /**< length of the string */                                                            
     char *string;                               /**< pointer to string data */                                                         
+    size_t len;                                 /**< length of the string */                                                            
 }doc_string;
 
 /**
@@ -257,8 +258,8 @@ typedef struct{
  */
 typedef struct{
     doc header;                                 /**< struct inherited of */                                                    
-    size_t len;                                 /**< length of the binary data */                                                   
     uint8_t *data;                              /**< pointer to binary data */                                                         
+    size_t len;                                 /**< length of the binary data */                                                   
 }doc_bindata;
 
 #pragma (pop)
@@ -269,12 +270,11 @@ typedef struct{
 // Macro checking ----------------------------------
 
 /**
- * @brief internal function, check if obj is null, if it is, returns a dummy doc 
- * to be written to by some macros that would segfault on a null pointer
- * @param obj: pointer to doc
- * @return the object itself or a dummy in case obj is null
+ * @brief check to see if is a string or binary data type
+ * @param value: doc value to check
+ * @return true if string or bindata, false otherwise
  */
-doc *__check_obj(doc *obj); 
+bool __check_string_bindata(doc *value);
 
 /**
  * @brief internal function, check if obj is null and if it is a value type, if it is, returns a dummy doc 
@@ -364,29 +364,14 @@ doc *doc_copy(doc *variable, char *name);
 void doc_rename(doc *variable, char *name, char *new_name);
 
 /**
- * @brief get the amount of childs an array or obj has
- * @param object_or_array: pointer to existing object
- * @return amount of childs
+ * @brief returns the size of a doc data type
+ * @param value: pointer to existing doc value
+ * @param name: name of a value inside 'value'
+ * @return if the value 'name' inside 'value' is an array or object, it returns the members inside of it,
+ * if it is a string or binary data, then it will return the len or size respectively, for any other value type
+ * it will return the size of that data type, and at last, NULL passed pointer and not found values will return 0 
  */
-childs_amount_t doc_get_childs_amount(doc *object_or_array, char *name);
-
-/**
- * @brief set string data pointer and string len
- * @param obj: pointer to existing object
- * @param name: name of the data inside obj
- * @param new_string: new string pointer
- * @param new_len: new string len
- */
-void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len);
-
-/**
- * @brief set binary data pointer and its len
- * @param obj: pointer to existing object
- * @param name: name of the data inside obj
- * @param new_data: new data pointer
- * @param new_len: new data len
- */
-void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
+doc_size_t doc_get_size(doc *value, char *name);
 
 /* ----------------------------------------- Macros ----------------------------------------- */
 
@@ -401,41 +386,13 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
 // Doc functions -----------------------------------
 
 /**
- * @brief gets the actual value from a doc instance
+ * @brief gets the actual value from a doc instance, as a C type
  * @param obj: pointer to the value instance
+ * @param name: the name of the value inside obj
  * @param type: type of the data, C keyword types
  * @return the actual value
  */
-#define doc_get(obj, name, type) (((doc_##type*)doc_get_ptr(obj, name))->value)
-
-/**
- * @brief gets the string pointer from a doc instance
- * @param obj: pointer to the string instance
- * @return pointer to string
- */
-#define doc_get_string(obj, name) ( (((doc_string*)doc_get_ptr(obj, name))->string) )
-
-/**
- * @brief gets the string len from a doc instance
- * @param obj: pointer to the string instance
- * @return string length
- */
-#define doc_get_string_len(obj, name) (((doc_string*)doc_get_ptr(obj, name))->len)
-
-/**
- * @brief gets the binary data len from a doc instance
- * @param obj: pointer to the data instance
- * @return pointer to binary data
- */
-#define doc_get_bindata(obj, name) (((doc_bindata*)doc_get_ptr(obj, name))->data)
-
-/**
- * @brief gets the binary data len from a doc instance
- * @param obj: pointer to the data instance
- * @return size_t length   
- * @return binary data length
- */
-#define doc_get_bindata_size(obj, name) (((doc_bindata*)doc_get_ptr(obj, name))->len)
+#define doc_get(obj, name, type) (*(type*)((void*)doc_get_ptr(obj, name) + sizeof(doc)))
 
 /**
  * @brief sets the new value for a instance
@@ -443,8 +400,13 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
  * @param name: name of the data inside obj
  * @param type: type of the data, C keyword types
  * @param new_value: value to be set
+ * @param ...: as optional argument to char* and uint8_t* types, the len should be specified
  */
-#define doc_set(obj, name, type, new_value) ( ((doc_##type*)__check_obj_is_value(doc_get_ptr(__check_obj(obj),name)))->value = new_value )
+#define doc_set(obj, name, type, new_value, ...) \
+    if(__check_string_bindata(doc_get_ptr(obj, name))){ \
+        ((doc_bindata*)doc_get_ptr(obj, name))->len = strtoull(#__VA_ARGS__, NULL, 10); \
+    } \
+    *(type*)((void*)__check_obj_is_value(doc_get_ptr(obj,name)) + sizeof(doc)) = new_value
 
 /**
  * @brief creates a iterator for a object or array to be used on a for loop

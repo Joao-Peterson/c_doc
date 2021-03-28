@@ -31,7 +31,7 @@ int main(int argc, char **argv){
     char *json_stream = read_asci("./test/types.json"); 
     doc *json_doc = doc_parse_json(json_stream);
 
-    doc_add(json_doc, ".", "blob", dt_const_bindata, (void *)blob, (size_t)269);
+    doc_add(json_doc, ".", "blob", dt_const_bindata, (void *)blob, (doc_size_t)269);
 
     if(doc_error_code){
         printf("[DOC] : %s\n", doc_get_error_msg());

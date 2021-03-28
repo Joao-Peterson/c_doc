@@ -44,7 +44,7 @@ doc *parse_value(char **string){
     
     char *value_begin = strpbrk((*string), VALUE_TOKEN_SEQ);
 
-    childs_amount_t i = 0;
+    doc_size_t i = 0;
     char *control = NULL;
     char *value_end = NULL;
     doc *last_member = NULL;
@@ -231,7 +231,7 @@ void stringify(doc *variable, char **base_address, size_t *length){
 
             member = variable->child;
 
-            for(childs_amount_t i = 0; i < variable->childs; i++){
+            for(doc_size_t i = 0; i < variable->childs; i++){
                 if( i != 0 )
                     strcat(*base_address, ",");                                     // cat comma before every member, except on the first
                 
