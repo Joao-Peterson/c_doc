@@ -29,7 +29,7 @@ Just alter the [Makefile](./Makefile) as needed and run `make release` and the l
 
 ### Use
 
-A sample application is written in [example_doc.c](./example_doc.c).
+A sample application is written in [example_doc.c](./examples/example_doc.c).
 
 Starting by creating a new object:
 
@@ -444,7 +444,7 @@ We can even add new data to parsed files and stringify then with a few lines of 
 
 In this example we added a long string as constant binary data, without the null terminator character, with any other data type, the strigified version will be exactly the same, except with dt_bindata and dt_const_bindata, where the data will be converted to base64 first.
 
-In the example [parser_example.c](./parser_example.c), types.json looks like this before:
+In the example [json_example.c](./examples/json_example.c), types.json looks like this before:
 
 ```c
     {
