@@ -423,7 +423,7 @@ For a json file format, it goes like this:
 
 ```c
     char *json_stream = read_asci("./test/types.json"); 
-    doc *json_doc = doc_parse_json(json_stream);
+    doc *json_doc = doc_json_parse(json_stream);
 ```
 
 First loading the the file into memory, then calling the parser to get the data structure, simple. 
@@ -431,7 +431,7 @@ First loading the the file into memory, then calling the parser to get the data 
 Calling stringify we can can make any data structure into a json file, as long as the parent doc is a single object file.
 
 ```c
-    char *json_stream_out = doc_stringify_json(json_doc);
+    char *json_stream_out = doc_json_stringify(json_doc);
 ```
 
 We can even add new data to parsed files and stringify then with a few lines of code:

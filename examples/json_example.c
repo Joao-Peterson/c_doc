@@ -29,7 +29,7 @@ int main(int argc, char **argv){
     char blob[] = "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
 
     char *json_stream = read_asci("./test/types.json"); 
-    doc *json_doc = doc_parse_json(json_stream);
+    doc *json_doc = doc_json_parse(json_stream);
 
     doc_add(json_doc, ".", "blob", dt_const_bindata, (void *)blob, (doc_size_t)269);
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv){
         printf("[DOC] : %s\n", doc_get_error_msg());
     }
 
-    char *json_stream_out = doc_stringify_json(json_doc);    
+    char *json_stream_out = doc_json_stringify(json_doc);    
 
     FILE *json_out = fopen("./test/out.json", "w+");
     fprintf(json_out, "%s", json_stream_out);

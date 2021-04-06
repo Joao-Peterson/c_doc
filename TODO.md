@@ -2,6 +2,8 @@ Important:
 
 - Error handling inside parsers and stringifiers
 
+- numeric values interpretation on xml parser
+
 Features :
 
 - Parser and stringifier for .ini files 

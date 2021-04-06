@@ -30,9 +30,11 @@ int main(int argc, char **argv){
     size_t len;
     char *xml_stream = read_asci("test/books.xml", &len);
 
-    doc *xml = doc_parse_xml(xml_stream);
+    doc *xml = doc_xml_parse(xml_stream);
 
-    doc_print(xml);
+    // doc_print(xml);
+
+    char *xml_string = doc_xml_stringify(xml);
 
     doc_delete(xml, ".");
 

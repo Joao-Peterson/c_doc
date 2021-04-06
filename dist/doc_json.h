@@ -31,7 +31,7 @@ typedef doc_int32_t     integer_number_t;                                       
  * @param file_stream: null terminated file stream
  * @return pointer to 'doc' structure
  */
-doc *doc_parse_json(char *file_stream);
+doc *doc_json_parse(char *file_stream);
 
 /**
  * @brief creates a json file out of a 'doc' structure
@@ -40,6 +40,6 @@ doc *doc_parse_json(char *file_stream);
  * @note json_doc must be of type dt_obj, as if it represents the actual json file,
  * and the name will not be displayed, because json files start with a '{'
  */
-char *doc_stringify_json(doc *json_doc);
+char *doc_json_stringify(doc *json_doc);
 
 #endif
