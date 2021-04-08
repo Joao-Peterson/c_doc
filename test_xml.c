@@ -32,10 +32,16 @@ int main(int argc, char **argv){
 
     doc *xml = doc_xml_parse(xml_stream);
 
-    // doc_print(xml);
+    doc_print(xml);
 
     char *xml_string = doc_xml_stringify(xml);
 
+    FILE *xml_out = fopen("test/books.out.xml", "w+");
+
+    fprintf(xml_out, xml_string);
+
+    free(xml_string);
+    fclose(xml_out);
     doc_delete(xml, ".");
 
     return 0;

@@ -185,77 +185,122 @@ doc *doc_xml_parse(char *xml_stream){
 void printf_stringify_value(char **base_address, size_t *length, doc *variable, bool use_tags){
     char *buffer = NULL;
 
-    char *rational_format          = (use_tags) ? "<%s>%.*G</%s>" : "%.*G";
-    char *integer_format           = (use_tags) ? "<%s>%i</%s>"   : "%i";
-    char *unsigned_integer_format  = (use_tags) ? "<%s>%u</%s>"   : "%u";
-    char *string_format            = (use_tags) ? "<%s>%s</%s>"   : "%s";
-
     switch(variable->type){
         case dt_double:
-            printf_stringify(base_address, length, 2*strlen(variable->name), rational_format, variable->name, FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name), "<%s>%.*G</%s>", variable->name, FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name), "%.*G", FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
         break;
             
         case dt_float:
-            printf_stringify(base_address, length, 2*strlen(variable->name), rational_format, variable->name, FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name), "<%s>%.*G</%s>", variable->name, FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name), "%.*G", FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
         break;
 
         case dt_int:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, integer_format, variable->name, ((doc_int *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int *)(variable))->value);
         break;
  
         case dt_int8:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, integer_format, variable->name, ((doc_int8_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int8_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int8_t *)(variable))->value);
         break;
  
         case dt_int16:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, integer_format, variable->name, ((doc_int16_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int16_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int16_t *)(variable))->value);
         break;
  
         case dt_int32:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, integer_format, variable->name, ((doc_int32_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int32_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int32_t *)(variable))->value);
         break;
  
         case dt_int64:        
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, integer_format, variable->name, ((doc_int64_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int64_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int64_t *)(variable))->value);
         break;
  
         case dt_uint:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, unsigned_integer_format, variable->name, ((doc_uint_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint_t *)(variable))->value);
         break;
  
         case dt_uint8:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, unsigned_integer_format, variable->name, ((doc_uint8_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint8_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint8_t *)(variable))->value);
         break;
  
         case dt_uint16:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, unsigned_integer_format, variable->name, ((doc_uint16_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint16_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint16_t *)(variable))->value);
         break;
  
         case dt_uint32:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, unsigned_integer_format, variable->name, ((doc_uint32_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint32_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint32_t *)(variable))->value);
         break;
  
         case dt_uint64:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, unsigned_integer_format, variable->name, ((doc_uint64_t *)(variable))->value, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint64_t *)(variable))->value, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint64_t *)(variable))->value);
         break;
 
         case dt_bool:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + 5, string_format, variable->name, (((doc_bool *)(variable))->value) ? "true" : "false", variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + 5, "<%s>%s</%s>", variable->name, (((doc_bool *)(variable))->value) ? "true" : "false", variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + 5, "%s", (((doc_bool *)(variable))->value) ? "true" : "false");
         break;
 
         case dt_null:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + 4, string_format, variable->name, "null", variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + 4, "<%s>%s</%s>", variable->name, "null", variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + 4, "%s", "null");
         break;
 
         case dt_string:
         case dt_const_string:
-            printf_stringify(base_address, length, 2*strlen(variable->name) + ((doc_string *)variable)->len, string_format, variable->name, ((doc_string *)variable)->string, variable->name);
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + ((doc_string *)variable)->len, "<%s>%s</%s>", variable->name, ((doc_string *)variable)->string, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + ((doc_string *)variable)->len, "%s", ((doc_string *)variable)->string);
         break;
 
         case dt_bindata:
         case dt_const_bindata:
             buffer = base64_encode(((doc_bindata *)variable)->data, ((doc_bindata *)variable)->len);            
-            printf_stringify(base_address, length, 2*strlen(variable->name) + strlen(buffer), string_format, variable->name, buffer, variable->name);
+
+            if(use_tags)
+                printf_stringify(base_address, length, 2*strlen(variable->name) + strlen(buffer), "<%s>%s</%s>", variable->name, buffer, variable->name);
+            else
+                printf_stringify(base_address, length, 2*strlen(variable->name) + strlen(buffer), "%s", buffer);
+
             free(buffer);
         break;
     }
@@ -267,6 +312,7 @@ void xml_stringify(doc *variable, char **base_address, size_t *length){
     doc *member = NULL;
     size_t value_len;
     bool first_call = false;
+    bool atributes_tag_jump = false;
 
     if(*base_address == NULL){
         *base_address = calloc(1, sizeof(**base_address));
@@ -294,16 +340,21 @@ void xml_stringify(doc *variable, char **base_address, size_t *length){
             // if contains a single <value> tag, then its a value tag, otherwise is a tag that contains other tags
             doc *value = doc_get_ptr(variable, "value");
             if(variable->childs <= 2 && value != NULL){                             // value tag
-                printf_stringify_value(base_address, length, variable, false);
+                printf_stringify_value(base_address, length, value, false);
             }
             else{                                                                   // parent tag
                 for(doc_ite(member, variable)){
+                    if(!atributes_tag_jump && !strcmp(member->name, "atributes")){                         // if the child isn't the atributes object
+                        atributes_tag_jump = true;
+                        continue;
+                    }
+                        
                     xml_stringify(member, base_address, length);
                 }
             }
 
             // close tag
-            printf_stringify(base_address, length, strlen(variable->name), "<\%s>", variable->name);
+            printf_stringify(base_address, length, strlen(variable->name), "</%s>", variable->name);
 
         break;
 
@@ -320,7 +371,9 @@ char *doc_xml_stringify(doc *xml_doc){
     if(xml_doc->type != dt_obj)
         return NULL;
 
-    xml_stringify(xml_doc, &xml_stream, &xml_stream_len);
+    for(doc_ite(member, xml_doc)){
+        xml_stringify(member, &xml_stream, &xml_stream_len);
+    }
 
     return xml_stream;
 }

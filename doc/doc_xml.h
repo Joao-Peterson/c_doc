@@ -23,6 +23,15 @@
  */
 doc *doc_xml_parse(char *xml_stream);
 
+
+/**
+ * @brief generate a xml text stream of the data structure
+ * @note each value that will become a xml tag must be a object with two members,
+ * with one being a object with name 'atributes' that holds the atributes of the tag,
+ * and other object with name 'value', that holds the actual value of the tag.
+ * @param xml_doc: pointer to a doc structure
+ * @return char string with the xml file
+ */
 char *doc_xml_stringify(doc *xml_doc);
 
 #endif
