@@ -43,7 +43,7 @@ doc_uint64_t dummy_doc_internal = { .value = 0xFFFFFFFFFFFFFFFF, .header = { .na
 doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
 
 // ilegal ascii characters on names
-const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,-.\\";
+const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,.\\";
 
 // internal error vars, the char * one holds information about the name of instance to be acted on
 errno_doc_code_t errno_doc_code_internal = 0;
@@ -103,11 +103,16 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
         return NULL;
     }
 
-    char *char_veri = strpbrk(name,illegal_chars_doc_name);
-    if( char_veri != NULL){
-        errno_doc_code_internal = errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator;
-        errno_msg_doc_internal = name;
-        return NULL;
+    if(name != NULL){
+        char *char_veri = strpbrk(name,illegal_chars_doc_name);
+        if( char_veri != NULL){
+            errno_doc_code_internal = errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator;
+            errno_msg_doc_internal = name;
+            return NULL;
+        }
+    }
+    else{
+        name = "";
     }
 
     uint8_t *buffer;
@@ -446,10 +451,17 @@ int __doc_get_error_code(void){
 
 // check object for the for loop iterator macro
 doc *__check_obj_ite_macro(doc *obj){
-    if (obj == NULL || (obj->type != dt_obj && obj->type != dt_array))
-        return NULL;
-    else
-        return obj->child;
+    if (obj == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_obj;
+        return dummy_doc_internal_ptr;
+    }
+    else if(obj->type != dt_obj && obj->type != dt_array){
+        errno_doc_code_internal = errno_doc_trying_to_get_data_from_non_object_or_non_array;
+        return dummy_doc_internal_ptr;
+    }
+    else{
+        return obj;
+    }
 }
 
 /* ----------------------------------------- Functions -------------------------------------- */
@@ -537,6 +549,7 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
 
     variable->childs++;
 
+    new_variable->parent = variable;
     if(variable->child == NULL){
         variable->child = new_variable;
     }
@@ -555,58 +568,56 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
 
 // delete element denoted by 'name'
 void doc_delete(doc *object_or_array, char *name){
-    
-    doc *variable = get_variable_ptr(object_or_array, name);                    // get pointer to instance
-    if(variable == NULL)
+    if(object_or_array == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_msg_doc_internal = name;
         return;
+    }
+
+    doc *variable = get_variable_ptr(object_or_array, name);                    // get pointer to instance
+    
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_value_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
 
     switch(variable->type){                                                     
         case dt_array:                                                              // in case of a entire OBJ OR ARRAY
         case dt_obj:
-            while(variable->child == NULL){
-                doc_delete(variable->child, ".");
+            for(doc* member = variable->child; member != NULL; member = variable->child){
+                doc_delete(member, ".");
             }
-            
-            free(variable);
         break;
 
-        default:                                                                    // in case of a VALUE element
+        case dt_string:
+            free(((doc_string*)variable)->string);
+        break;
 
-            if(variable->prev == NULL && variable->next == NULL){                   // last elemen of obj or array 
-                variable->parent->child = NULL;
-            }
-            else if(variable->parent->child == variable){                           // first element of an object or array
-                variable->parent->child = variable->next;
-                variable->next->prev = NULL;
-            }
-            else if(variable->next == NULL){                                        // last element of an object or array
-                variable->prev->next = NULL;
-            }
-            else{                                                                   // an element of a object or array
-                variable->prev->next = variable->next;
-                variable->next->prev = variable->prev;
-            }
-
-            free(variable->name);
-
-            switch(variable->type){                                                 // if non const type of string and bindata, free its content as well
-                case dt_string:
-                    free(((doc_string*)variable)->string);
-                    free(variable);                    
-                break;
-
-                case dt_bindata:
-                    free(((doc_bindata*)variable)->data);
-                    free(variable);                    
-                break;
-
-                default:
-                    free(variable);
-                break;
-            }
-
+        case dt_bindata:
+            free(((doc_bindata*)variable)->data);
         break;
     }
+
+    if(variable->parent != NULL){                                           // if the variable is not a child, then is not part of an array, making next and prev pointer manipulation unnecessary 
+        if(variable->prev == NULL && variable->next == NULL){              // last elemen of obj or array 
+            variable->parent->child = NULL;
+            variable->parent->childs = 0;
+        }
+        else if(variable->parent->child == variable){                           // first element of an object or array
+            variable->parent->child = variable->next;
+            variable->next->prev = NULL;
+            variable->parent->childs--;
+        }
+        else{                                                                   // an element of a object or array
+            variable->prev->next = variable->next;
+            variable->next->prev = variable->prev;
+            variable->parent->childs--;
+        }
+    }
+
+    free(variable->name);
+    free(variable);
 
     errno_doc_code_internal = errno_doc_ok;
 }
@@ -726,9 +737,9 @@ void doc_append(doc *object_or_array, char *name, doc *variable){
         return;
     }
 
+    variable->parent = obj;
     if(obj->child == NULL){
         obj->child = variable;
-        variable->parent = obj;
     }
     else{
         doc *cursor = obj->child;

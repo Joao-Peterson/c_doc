@@ -434,6 +434,6 @@ doc_size_t doc_get_size(doc *value, char *name);
  * @param iterator: name for the iterator variable, has implicity type "doc*"
  * @param obj_or_array: object or array that contains the members to be looped
  */
-#define doc_ite(iterator, obj_or_array) doc* iterator = __check_obj_ite_macro(obj_or_array); iterator != NULL; iterator = iterator->next
+#define doc_ite(iterator, obj_or_array) doc* iterator = __check_obj_ite_macro(obj_or_array)->child; iterator != NULL; iterator = iterator->next
 
 #endif

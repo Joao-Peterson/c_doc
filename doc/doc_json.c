@@ -31,7 +31,7 @@ typedef doc_int32_t     integer_number_t;                                       
 /* ----------------------------------------- Private Functions ------------------------------ */
 
 // parse a string from '"' to the end '"', and cat it to the *string
-char *parse_string(char **string){
+static char *parse_string(char **string){
     (*string) = strpbrk((*string), "\"") + 1;                                           // locate string beggining
 
     char *special = (*string) - 2;                                                  // +2 because of -=2 inside do while
@@ -58,7 +58,7 @@ char *parse_string(char **string){
 }
 
 // parse a value after ':', may it be any json type and cat it to the *string, recursive
-doc *parse_value(char **string){    
+static doc *parse_value(char **string){    
     doc *variable = NULL;
     
     // char *value_begin = strpbrk((*string), ":");
@@ -209,7 +209,7 @@ doc *parse_value(char **string){
 }
 
 // recursive function call to create the json
-void stringify(doc *variable, char **base_address, size_t *length){
+static void stringify(doc *variable, char **base_address, size_t *length){
 
     char *value = NULL;
     char *buffer = NULL;
