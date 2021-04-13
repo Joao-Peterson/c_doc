@@ -28,7 +28,7 @@ char *read_asci(const char *path, size_t *size_ptr){
 int main(int argc, char **argv){
 
     size_t len;
-    char *xml_stream = read_asci("test/tinsul_tampas.xml", &len);
+    char *xml_stream = read_asci("test/worksheet.xml", &len);
 
     doc *xml = doc_xml_parse(xml_stream);
 

@@ -12,9 +12,9 @@ L_FLAGS :=
 
 EXE:= main.exe
 
-SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_print.c
-TEST_SOURCE := test_xml.c
-HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_print.h
+SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c doc/doc_print.c
+TEST_SOURCE := test_ini.c
+HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h doc/doc_print.h
 
 VERSION := 1.4
 
@@ -34,7 +34,7 @@ TAR := tar -c -v -z -f
 #   $(filter $(subst *,%,$2),$d))
 
 OBJS := $(SOURCES:.c=.o)
-OBJS_BUILD := $(addprefix $(BUILD_DIR), $(notdir $(SOURCES:.c=.o)))
+OBJS_BUILD := $(addprefix $(BUILD_DIR), $(OBJS))
 TEST_OBJ := $(TEST_SOURCE:.c=.o)
 
 # ---------------------------------------------------------------
@@ -50,7 +50,7 @@ release : $(OBJS) dist
 
 
 %.o : %.c
-	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $(addprefix $(BUILD_DIR), $(notdir $@))
+	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $(addprefix $(BUILD_DIR), $@)
 
 
 dist : $(OBJS_BUILD)
@@ -67,6 +67,5 @@ main:
 
 
 clear : 
-	@rm -f $(OBJS_BUILD)
-	@rm -f $(BUILD_DIR)$(TEST_OBJ)
+	@rm -f $(BUILD_DIR)/*
 	@rm -f $(DIST_DIR)$(LIB_NAME)
