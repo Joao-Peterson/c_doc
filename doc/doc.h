@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 /* ----------------------------------------- Definitions ------------------------------------ */
 
