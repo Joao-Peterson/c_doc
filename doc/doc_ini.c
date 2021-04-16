@@ -1,20 +1,26 @@
 #include "doc_ini.h"
 
+/* ----------------------------------------- Private Functions ------------------------------ */
+
+// run whitespace except for the '\n' line break
 static void run_space(char **stream){
     while( **stream != '\n' && ((**stream >= '\b' && **stream <= '\r') || **stream == 32) )
         (*stream)++;
 }
 
+// run all whitespace chars
 static void run_whitespace(char **stream){
     while( ((**stream >= '\b' && **stream <= '\r') || **stream == 32) )
         (*stream)++;
 }
 
+// run whitespace backwards
 static void run_whitespace_back(char **stream){
     while( ((**stream >= '\b' && **stream <= '\r') || **stream == 32) )
         (*stream)--;
 }
 
+// parse a section tag
 static doc *parse_section(char **stream){
     if(*stream == NULL) return NULL;
 
@@ -30,6 +36,7 @@ static doc *parse_section(char **stream){
     return section;
 }
 
+// parse a variable
 static doc *parse_variable(char **stream){
     if(*stream == NULL) return NULL;
     
@@ -125,6 +132,7 @@ static doc *parse_variable(char **stream){
     return variable;
 }
 
+// try and parse a section, variable or anonymous var, and ignore comments
 static doc *parse_token(char **stream){
     if(*stream == NULL) return NULL;
 
@@ -150,6 +158,7 @@ static doc *parse_token(char **stream){
     }
 }
 
+// parse a ini file
 static doc *parse_ini(char **stream){
     if(*stream == NULL) return NULL;
 
@@ -174,6 +183,9 @@ static doc *parse_ini(char **stream){
     return ini;
 }
 
+/* ----------------------------------------- Functions -------------------------------------- */
+
+// parses a ini/cfg text file into a doc structure 
 doc *doc_ini_parse(char *ini_file_stream){
     if(ini_file_stream == NULL) return NULL;
 
@@ -188,4 +200,8 @@ doc *doc_ini_parse(char *ini_file_stream){
 
     free(base_stream);
     return doc_ini;
+}
+
+doc *doc_ini_stringify(doc *doc_ini){
+    
 }

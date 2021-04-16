@@ -27,8 +27,8 @@ const char *doc_type_str_array[] = {
 
 FILE *out = NULL;
 
-fprint_function_t fprint_function = NULL;
-print_function_t print_function = NULL;
+static doc_fprint_function_t fprint_function = NULL;
+static doc_print_function_t print_function = NULL;
 
 typedef enum{
     use_fprint,
@@ -47,18 +47,18 @@ print_type_t print_type = 0;
         break; \
     } 
 
-void doc_print_set(print_function_t print_function_ptr){
+void doc_print_set(doc_print_function_t print_function_ptr){
     print_function = print_function_ptr;
     print_type = use_print;
 }
 
-void doc_print_file_set(fprint_function_t fprint_function_ptr, FILE *f_out){
+void doc_print_file_set(doc_fprint_function_t fprint_function_ptr, FILE *f_out){
     fprint_function = fprint_function_ptr;
     out = f_out;
     print_type = use_fprint;
 }
 
-void print_variable(doc *variable, size_t level){
+static void print_variable(doc *variable, size_t level){
     for(size_t i = 0; i < level; i++)
         print_wrapper("    ");
     
@@ -67,7 +67,7 @@ void print_variable(doc *variable, size_t level){
         case dt_array:
             print_wrapper("[%s] (%s): \n", variable->name, doc_type_str_array[variable->type]);
 
-            for(doc_ite(member, variable)){
+            for(doc_loop(member, variable)){
                 print_variable(member, level + 1);
             }
         break;

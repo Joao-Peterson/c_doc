@@ -2,25 +2,35 @@
 #include <stdlib.h>
 #include "doc/doc.h"
 #include "doc/doc_ini.h"
+#include "doc/doc_json.h"
 #include "doc/doc_print.h"
+
+char *fstream(char *filename){
+    FILE *file_p = fopen(filename, "r+b");
+
+    fseek(file_p, 0, SEEK_END);
+    long file_p_size = ftell(file_p) + 1;
+    fseek(file_p, 0, SEEK_SET);
+
+    char *file_stream = (char*)calloc(file_p_size, sizeof(char));
+    fread(file_stream, sizeof(char), file_p_size, file_p);
+    fclose(file_p);
+
+    return file_stream;
+}
 
 int main(int argc, char **argv){
 
-    FILE *ini_file = fopen("test/config.ini", "r+b");
+    char *json_stream = fstream("test/squash.json");
 
-    fseek(ini_file, 0, SEEK_END);
-    long ini_file_size = ftell(ini_file) + 1;
-    fseek(ini_file, 0, SEEK_SET);
+    if(json_stream == NULL) return 0;
 
-    char *ini_stream = (char*)calloc(ini_file_size, sizeof(char));
-    fread(ini_stream, sizeof(char), ini_file_size, ini_file);
-    fclose(ini_file);
+    doc *json = doc_json_parse(json_stream);
 
-    doc *ini = doc_ini_parse(ini_stream);
+    doc_squash(json, ".", 2);
 
-    free(ini_stream);
-
-    doc_print(ini);
+    doc_print_file_set(fprintf, stdout);
+    doc_print(json);
 
     return 0;
 }

@@ -341,7 +341,7 @@ static void stringify(doc *variable, char **base_address, size_t *length){
 
             doc *atributes = doc_get_ptr(variable, "atributes");
             if(doc_error_code != errno_doc_value_not_found && atributes != NULL){   
-                for(doc_ite(atribute, atributes)){
+                for(doc_loop(atribute, atributes)){
                     printf_stringify(base_address, length, strlen(atribute->name) + ((doc_string*)atribute)->len, " %s=\"%s\"", atribute->name, ((doc_string*)atribute)->string);
                 }
             }
@@ -349,7 +349,7 @@ static void stringify(doc *variable, char **base_address, size_t *length){
             printf_stringify(base_address, length, 1, ">");
 
             // generate values and other tags inside the tag
-            for(doc_ite(member, variable)){
+            for(doc_loop(member, variable)){
                 if(!atributes_tag_jump && !strcmp(member->name, "atributes")){      // if the child isn't the atributes object
                     atributes_tag_jump = true;
                     continue;
@@ -382,7 +382,7 @@ char *doc_xml_stringify(doc *xml_doc){
     if(xml_doc->type != dt_obj)
         return NULL;
 
-    for(doc_ite(member, xml_doc)){
+    for(doc_loop(member, xml_doc)){
         stringify(member, &xml_stream, &xml_stream_len);
     }
 

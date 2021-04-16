@@ -28,13 +28,13 @@
 
 #define ERROR_MSG_LEN_DOC_HEADER    500     // max string len for error msg, used by doc_get_error_msg()
 
-#define DOC_NAME_MAX_LEN            100     // max name length for doc instance
+#define DOC_NAME_MAX_LEN            250     // max name length for doc instance
 
 #define MAX_OBJ_MEMBER_QTY   UINT32_MAX     // maximum quantity of members inside a array or object  
 
 /* ----------------------------------------- Typedef's ---------------------------------------- */
 
-typedef uint32_t doc_size_t;           // type for looping through members inside array's or obj's  
+typedef uint32_t doc_size_t;                // type for looping through members inside array's or obj's  
 
 typedef unsigned int uint_t;                // syntax sugar for getting the values with get_value() macro later
 
@@ -292,18 +292,18 @@ typedef struct{
 
 /**
  * @brief check to see if is a string or binary data type
- * @param value: doc value to check
+ * @param variable: doc value to check
  * @return true if string or bindata, false otherwise
  */
-bool __check_string_bindata(doc *value);
+bool __check_string_bindata(doc *variable);
 
 /**
  * @brief internal function, check if obj is null and if it is a value type, if it is, returns a dummy doc 
  * to be written to by some macros that would segfault on a null pointer
- * @param obj: pointer to doc
+ * @param variable: pointer to doc
  * @return the object itself or a dummy in case obj is null or non value type
  */
-doc *__check_obj_is_value(doc *obj);
+doc *__check_obj_is_value(doc *variable);
 
 /**
  * @brief internal function, visible only for macro porpouses
@@ -315,7 +315,7 @@ int __doc_get_error_code(void);
  * @brief internal function, check if obj is a object or array and if it is NULL
  * if not return its first child, else return NULL.
  */
-doc *__check_obj_ite_macro(doc *obj);
+doc *__check_obj_ite_macro(doc *object_or_array);
 
 // Doc functions -----------------------------------
 
@@ -346,18 +346,18 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
 
 /**
  * @brief deletes a instance and its members recursevely, if any
- * @param object_or_array: pointer to existing object
+ * @param variable: pointer to existing object
  * @param name: name of the data inside object_or_array to delete
  */
-void doc_delete(doc *object_or_array, char *name);
+void doc_delete(doc *variable, char *name);
 
 /**
  * @brief gets a pointer to element inside object_or_array
- * @param object_or_array: pointer to existing object
+ * @param variable: pointer to existing object
  * @param name: name of the data inside object_or_array
  * @return pointer to the element
  */
-doc *doc_get_ptr(doc* object_or_array, char *name);
+doc* doc_get_ptr(doc* variable, char *name);
 
 /**
  * @brief append an already made doc variable to a object or array
@@ -386,13 +386,26 @@ void doc_rename(doc *variable, char *name, char *new_name);
 
 /**
  * @brief returns the size of a doc data type
- * @param value: pointer to existing doc value
+ * @param variable: pointer to existing doc value
  * @param name: name of a value inside 'value'
  * @return if the value 'name' inside 'value' is an array or object, it returns the members inside of it,
  * if it is a string or binary data, then it will return the len or size respectively, for any other value type
  * it will return the size of that data type, and at last, NULL passed pointer and not found values will return 0 
  */
-doc_size_t doc_get_size(doc *value, char *name);
+doc_size_t doc_get_size(doc *variable, char *name);
+
+/**
+ * @brief squashes an variable to a maximun nesting depth.
+ * @note this will delete any object deepper than the maximum depth,
+ * leaving only the non object/arrays variables at the specified depth.
+ * This function is particularly useful when desiring to stringify a .ini file,
+ * since most commonly ini files do not have section nesting, therefore squashing it to
+ * a 1 level depth is useful.
+ * @param variable: pointer to the variable of interest
+ * @param name: the name of the variable to perform the squash
+ * @param max_depth: the max depth at wich the process will begin 
+ */
+void doc_squash(doc *variable, char *name, doc_size_t max_depth);
 
 /* ----------------------------------------- Macros ----------------------------------------- */
 
@@ -408,33 +421,33 @@ doc_size_t doc_get_size(doc *value, char *name);
 
 /**
  * @brief gets the actual value from a doc instance, as a C type
- * @param obj: pointer to the value instance
+ * @param variable: pointer to the value instance
  * @param name: the name of the value inside obj
  * @param type: type of the data, C keyword types
  * @return the actual value
  */
-#define doc_get(obj, name, type) (*(type*)((void*)doc_get_ptr(obj, name) + sizeof(doc)))
+#define doc_get(variable, name, type) (*(type*)((void*)doc_get_ptr(variable, name) + sizeof(doc)))
 
 /**
  * @brief sets the new value for a instance
- * @param obj: pointer to the data instance
+ * @param variable: pointer to the data instance
  * @param name: name of the data inside obj
  * @param type: type of the data, C keyword types
  * @param new_value: value to be set
  * @param ...: as optional argument to char* and uint8_t* types, the len should be specified
  */
-#define doc_set(obj, name, type, new_value, ...) \
+#define doc_set(variable, name, type, new_value, ...) \
     if(__check_string_bindata(doc_get_ptr(obj, name))){ \
-        ((doc_bindata*)doc_get_ptr(obj, name))->len = strtoull(#__VA_ARGS__, NULL, 10); \
+        ((doc_bindata*)doc_get_ptr(variable, name))->len = strtoull(#__VA_ARGS__, NULL, 10); \
     } \
-    *(type*)((void*)__check_obj_is_value(doc_get_ptr(obj,name)) + sizeof(doc)) = new_value
+    *(type*)((void*)__check_obj_is_value(doc_get_ptr(variable,name)) + sizeof(doc)) = new_value
 
 /**
  * @brief creates a iterator for a object or array to be used on a for loop
- * @note Eg. "for(doc_ite(member, object)){ printf("%s\n", member->name); }"
+ * @note Eg. "for(doc_loop(member, object)){ printf("%s\n", member->name); }"
  * @param iterator: name for the iterator variable, has implicity type "doc*"
  * @param obj_or_array: object or array that contains the members to be looped
  */
-#define doc_ite(iterator, obj_or_array) doc* iterator = __check_obj_ite_macro(obj_or_array)->child; iterator != NULL; iterator = iterator->next
+#define doc_loop(iterator, obj_or_array) doc* iterator = __check_obj_ite_macro(obj_or_array)->child; iterator != NULL; iterator = iterator->next
 
 #endif

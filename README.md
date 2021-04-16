@@ -333,12 +333,11 @@ You can also get the size of any type with *doc_get_size*, depending on the type
 This library provides a macro for doing iteration over a object or array.
 
 ```c
-    for(doc_ite(cursor, obj)){
+    for(doc_loop(cursor, obj)){
         printf("Member loop: %s\n", cursor->name);
     }
 ```
-The *doc_ite* sits inside the for loop, where *cursor* is the name of the iterator and *obj* the object to be iterated over. Cursor has type
-*doc* that is equal to a child of *obj*, therefore we can access the members value, like in the example where we can printf the names of the objects.
+The *doc_loop* sits inside the for loop, where *cursor* is the name of the iterator and *obj* the object to be iterated over. Cursor has type *doc* that is equal to a child of *obj*, therefore we can access the members value, like in the example where we can printf the names of the objects.
 
 ### Error checking
 

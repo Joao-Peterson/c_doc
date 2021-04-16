@@ -203,7 +203,7 @@ int main(int argc, char **argv){
     }
 
     // check iterator functionality
-    for(doc_ite(cursor, obj)){
+    for(doc_loop(cursor, obj)){
         log("[LOOP] Member loop: %s\n", cursor->name);
     }
 
