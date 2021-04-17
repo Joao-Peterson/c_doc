@@ -21,13 +21,16 @@ char *fstream(char *filename){
 
 int main(int argc, char **argv){
 
-    char *json_stream = fstream("test/squash.json");
+    if(argc < 3) return 0;
+
+    char *json_stream = fstream(argv[1]);
 
     if(json_stream == NULL) return 0;
 
     doc *json = doc_json_parse(json_stream);
 
-    doc_squash(json, ".", 2);
+    int depth = atoi(argv[2]);
+    doc_squash(json, ".", depth);
 
     doc_print_file_set(fprintf, stdout);
     doc_print(json);

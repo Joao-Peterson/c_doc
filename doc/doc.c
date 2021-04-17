@@ -64,7 +64,8 @@ const errno_doc_t errno_doc_msg_code_array[] = {
     ERR_TO_STRUCT(errno_doc_trying_to_get_data_from_non_object_or_non_array),
     ERR_TO_STRUCT(errno_doc_trying_to_set_value_of_non_value_type_data_type),
     ERR_TO_STRUCT(errno_doc_trying_to_set_string_of_non_string_data_type),
-    ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type)
+    ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type),
+    ERR_TO_STRUCT(errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data)
 };
 
 /* ----------------------------------------- Private Functions ------------------------------ */
@@ -405,44 +406,60 @@ static doc *get_variable_ptr(doc *object_or_array, char *path){
 
 // recusive doc squash call
 static doc *squash(doc *variable, doc_size_t max_depth, doc_size_t depth){
+    if(variable == NULL) return NULL;
+    
     switch(variable->type){
         case dt_array:                                                              // call squash on childsn then delet itself
         case dt_obj:
+        
             for(doc_loop(member, variable)){
                 member = squash(member, max_depth, depth + 1);
-
-                if(member == NULL) member = variable->child;
             }
+
+            doc *rtn = variable;
 
             if(depth >= max_depth){
-                doc *rtn;
-                rtn = variable->prev;
+                doc *last = variable->child;
+
+                while(last->next != NULL){
+                    last->parent = variable->parent;
+                    variable->parent->childs++;
+                    last = last->next;
+                }
+                last->parent = variable->parent;
+                variable->parent->childs++;
+
+                variable->child->prev = variable->prev;
+                if(variable->prev != NULL)
+                    variable->prev->next = variable->child;
+
+                last->next = variable->next;
+                if(variable->next != NULL)
+                    variable->next->prev = last;
+
+                if(variable->parent->child == variable){
+                    variable->parent->child = variable->child;
+                }
+
+                variable->parent->childs--;
+
+                variable->child = NULL;
+                variable->next = NULL;
+                variable->prev = NULL;
+                variable->parent = NULL;
                 doc_delete(variable, ".");
-                return rtn;
+
+                rtn = last;
             }
-            else{
-                return variable;
-            }
+
+            return rtn;
         break;
 
         default:                                                                    // squash it, place it next to parent
-            if(depth >= max_depth){
-                doc *variable_copy = doc_copy(variable, ".");
-                doc *parent = variable->parent->parent;
-                doc *last_member;
-
-                for(doc_loop(member, parent)){
-                    if(member->next == NULL)
-                        last_member = member;
-                }
-
-                variable_copy->prev = last_member;
-                last_member->next = variable_copy;
-                variable_copy->next = NULL;
-                variable_copy->parent = parent;
-                parent->childs++;
-            }
-
+            // if(depth >= max_depth){
+            //    
+            // }
+            
             return variable;
         break;
     }
@@ -647,16 +664,20 @@ void doc_delete(doc *variable, char *name){
     }
 
     if(var->parent != NULL){                                                        // if the variable is not a child, then is not part of an array, making next and prev pointer manipulation unnecessary 
-        if(var->prev == NULL && var->next == NULL){                                 // last elemen of obj or array 
+        if(var->prev == NULL && var->next == NULL){                                 // last 1 elements 
             var->parent->child = NULL;
             var->parent->childs = 0;
         }
-        else if(var->parent->child == var){                                         // first element of an object or array
+        else if(var->parent->child == var){                                         // first element 
             var->parent->child = var->next;
             var->next->prev = NULL;
             var->parent->childs--;
         }
-        else{                                                                       // an element of a object or array
+        else if(var->next == NULL){                                                 // last element
+            var->prev->next = var->next;
+            var->parent->childs--;
+        }
+        else{                                                                       // any in middle element 
             var->prev->next = var->next;
             var->next->prev = var->prev;
             var->parent->childs--;
@@ -981,7 +1002,14 @@ void doc_squash(doc *variable, char *name, doc_size_t max_depth){
 
         case dt_obj:
         case dt_array:
-            squash(variable, max_depth, 0);
+            if(max_depth == 0){
+                errno_doc_code_internal = errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data;
+                errno_msg_doc_internal = name;
+                return;
+            }
+            else{
+                squash(variable, max_depth, 0);
+            }
         break;
 
         default:

@@ -65,8 +65,8 @@ dist : $(OBJS_BUILD)
 	cp $(HEADERS) $(DIST_DIR)
 
 
-$(EXE): $(OBJS_BUILD)
-	$(CC) $(OBJS_BUILD) $(TEST_OBJ) -o $@
+$(EXE): $(OBJS_BUILD) $(TEST_OBJ)
+	$(CC) $^ -o $@
 
 
 # pack : 

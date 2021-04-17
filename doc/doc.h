@@ -108,7 +108,8 @@ typedef enum{
     errno_doc_trying_to_get_data_from_non_object_or_non_array                                                                   = -9,
     errno_doc_trying_to_set_value_of_non_value_type_data_type                                                                   = -10,
     errno_doc_trying_to_set_string_of_non_string_data_type                                                                      = -11,
-    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                                                                    = -12
+    errno_doc_trying_to_set_bindata_of_non_bindata_data_type                                                                    = -12,
+    errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data      = -13
 }errno_doc_code_t;
 
 /* ----------------------------------------- Structs ---------------------------------------- */
@@ -448,6 +449,9 @@ void doc_squash(doc *variable, char *name, doc_size_t max_depth);
  * @param iterator: name for the iterator variable, has implicity type "doc*"
  * @param obj_or_array: object or array that contains the members to be looped
  */
-#define doc_loop(iterator, obj_or_array) doc* iterator = __check_obj_ite_macro(obj_or_array)->child; iterator != NULL; iterator = iterator->next
+#define doc_loop(iterator, obj_or_array) \
+    doc* iterator = __check_obj_ite_macro(obj_or_array)->child; \
+    iterator != NULL; \
+    iterator = iterator->next
 
 #endif
