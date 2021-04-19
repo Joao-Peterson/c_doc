@@ -43,6 +43,32 @@ static doc *parse_section(char **stream){
     return section;
 }
 
+// crop and join a space inside a string
+static void strcrop(char *string, char *start, char *end){
+    *start = '\0';
+    strcat(string, end);
+}
+
+// clean a string with line breaking sequence
+static char *strbreak_clear(char *string){
+    char *string_copy = (char*)calloc(strlen(string) + 1, sizeof(char));
+    memcpy(string_copy, string, strlen(string) + 1);
+    
+    for(char *cursor = strpbrk(string_copy, "\\"); cursor != NULL; cursor = strpbrk(string_copy, "\\")){
+        char *start = cursor;
+
+        cursor++;
+        cursor = strpbrk(cursor, "\n");
+        cursor++;
+
+        char *end = cursor;
+
+        strcrop(string_copy, start, end);
+    }
+
+    return string_copy;
+}
+
 // parse a variable
 static doc *parse_variable(char **stream){
     if(*stream == NULL) return NULL;
@@ -55,14 +81,10 @@ static doc *parse_variable(char **stream){
 
     if(**stream == '{'){                                                            // anonymous variable
         (*stream)++;
-        run_whitespace(stream);
 
         lstring = *stream;
 
         *stream = strpbrk(*stream, "}");
-        (*stream)--;
-        run_whitespace_back(stream);
-        (*stream)++;
         
         char hold = **stream;
         **stream = '\0';
@@ -111,7 +133,6 @@ static doc *parse_variable(char **stream){
 
                 for(*stream = strpbrk(*stream, "\\\n"); *stream != NULL && **stream != '\n'; *stream = strpbrk(*stream, "\\\n")){
                     *stream = strpbrk(*stream, "\n");
-                    **stream = ' ';
                     (*stream)++;
                 }
 
@@ -122,7 +143,11 @@ static doc *parse_variable(char **stream){
                 len = *stream - lstring + 1;
                 (*stream)++;    
 
-                variable = doc_new(name, dt_string, lstring, len);
+                char *buffer_value = strbreak_clear(lstring);
+
+                variable = doc_new(name, dt_string, buffer_value, strlen(buffer_value) + 1);
+
+                free(buffer_value);
             }
 
         }
@@ -145,11 +170,17 @@ static doc *parse_token(char **stream){
 
     run_whitespace(stream);
 
-    if( **stream == '#' || **stream == ';'){                                        // comments
+    while(**stream == '#' || **stream == ';'){
         *stream = strpbrk(*stream, "\n");
         (*stream)++;
         run_whitespace(stream);
     }
+
+    // if( **stream == '#' || **stream == ';'){                                        // comments
+    //     *stream = strpbrk(*stream, "\n");
+    //     (*stream)++;
+    //     run_whitespace(stream);
+    // }
 
     if( (*stream)[0] == '\0' || (*stream)[1] == '\0') return NULL;
 
@@ -303,10 +334,18 @@ static void print_value(doc *variable, char **stream, size_t *length){
         
         case dt_string:
         case dt_const_string:
-            if(*(variable->name) == '\0')
-                printf_stringify(stream, length, ((doc_string*)variable)->len, "{%s}\n", ((doc_string*)variable)->string);
-            else
-                printf_stringify(stream, length, ((doc_string*)variable)->len + strlen(variable->name), "%s=%s\n", variable->name, ((doc_string*)variable)->string);
+            if(*variable->name != '\0' && strpbrk(((doc_string*)variable)->string, "#;") != NULL){
+                if(*(variable->name) == '\0')
+                    printf_stringify(stream, length, ((doc_string*)variable)->len, "{\"%s\"}\n", ((doc_string*)variable)->string);
+                else
+                    printf_stringify(stream, length, ((doc_string*)variable)->len + strlen(variable->name), "%s=\"%s\"\n", variable->name, ((doc_string*)variable)->string);
+            }
+            else{
+                if(*(variable->name) == '\0')
+                    printf_stringify(stream, length, ((doc_string*)variable)->len, "{%s}\n", ((doc_string*)variable)->string);
+                else
+                    printf_stringify(stream, length, ((doc_string*)variable)->len + strlen(variable->name), "%s=%s\n", variable->name, ((doc_string*)variable)->string);
+            }
         break;
 
         case dt_bindata:

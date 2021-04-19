@@ -1,6 +1,6 @@
 Important: 
 
-- Error handling inside parsers and stringifiers
+- Error handling inside parsers and stringifiers and refactoring to prevent segfaults
 
 - Json parser accept numbers as variable name, check array indexing only when '[' is found
 

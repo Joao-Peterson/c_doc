@@ -21,27 +21,23 @@ char *fstream(char *filename){
 
 int main(int argc, char **argv){
 
-    char *json_stream = fstream("test/1.json");
+    char *ini_stream = fstream("test/config.ini");
+    if(ini_stream == NULL) return 0;
 
-    if(json_stream == NULL) return 0;
-
-    doc *json = doc_json_parse(json_stream);
-
-    int depth = 5;
-    doc_squash(json, ".", depth);
+    doc *ini = doc_ini_parse(ini_stream);
 
     doc_print_file_set(fprintf, stdout);
-    doc_print(json);
+    doc_print(ini);
 
-    char *ini_out_stream = doc_ini_stringify(json);
+    char *ini_out_stream = doc_ini_stringify(ini);
 
-    FILE *ini_out = fopen("test/ini_out.ini", "w+");
+    FILE *ini_out = fopen("test/ini_out.ini", "w+b");
     fwrite(ini_out_stream, 1, strlen(ini_out_stream), ini_out);
     fclose(ini_out); 
 
     free(ini_out_stream);
-    free(json_stream);
-    doc_delete(json, ".");
+    free(ini_stream);
+    doc_delete(ini, ".");
 
     return 0;
 }
