@@ -1,4 +1,11 @@
 #include "doc_ini.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include "../base64/base64.h"
+
+#define UINT64_MAX_DECIMAL_CHARS    (20)
+#define FLOAT_MAX_DECIMAL_CHARS     (27)
+#define FLOAT_DECIMAL_PLACES        (10)
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
@@ -183,6 +190,158 @@ static doc *parse_ini(char **stream){
     return ini;
 }
 
+// print to output stream, reallocating it accordingly
+static void printf_stringify(char **string_start_address, size_t *length, size_t buffer_size, char *format, ...){
+    va_list args;
+    va_start(args, format);
+    
+    size_t token_size = buffer_size + strlen(format);
+    char *token = calloc(token_size, sizeof(*token));
+    vsnprintf(token, token_size, format, args);
+
+    *length += strlen(token);
+    *string_start_address = realloc(*string_start_address, *length);
+    strcat(*string_start_address, token);
+
+    free(token);
+    va_end(args);
+}
+
+// print a value
+static void print_value(doc *variable, char **stream, size_t *length){
+    char *buffer;
+    size_t buffer_size;
+    
+    switch(variable->type){
+        case dt_double:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS, "{%*.G}\n", FLOAT_DECIMAL_PLACES, ((doc_double*)variable)->value);
+            else
+                printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%*.G\n", FLOAT_DECIMAL_PLACES, ((doc_double*)variable)->value);
+        break;
+        case dt_float:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS, "{%*.G}\n", FLOAT_DECIMAL_PLACES, ((doc_float*)variable)->value);
+            else
+                printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%*.G\n", FLOAT_DECIMAL_PLACES, ((doc_float*)variable)->value);
+        break;
+        
+        case dt_uint:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%u}\n", ((doc_uint_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%u\n", ((doc_uint_t*)variable)->value);
+        break;
+        case dt_uint64:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%u}\n", ((doc_uint64_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%u\n", ((doc_uint64_t*)variable)->value);
+        break;
+        case dt_uint32:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%u}\n", ((doc_uint32_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%u\n", ((doc_uint32_t*)variable)->value);
+        break;
+        case dt_uint16:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%u}\n", ((doc_uint16_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%u\n", ((doc_uint16_t*)variable)->value);
+        break;
+        case dt_uint8:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%u}\n", ((doc_uint8_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%u\n", ((doc_uint8_t*)variable)->value);
+        break;
+        
+        case dt_int:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%i}\n", ((doc_int*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%i\n", ((doc_int*)variable)->value);
+        break;
+        case dt_int64:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%i}\n", ((doc_int64_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%i\n", ((doc_int64_t*)variable)->value);
+        break;
+        case dt_int32:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%i}\n", ((doc_int32_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%i\n", ((doc_int32_t*)variable)->value);
+        break;
+        case dt_int16:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%i}\n", ((doc_int16_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%i\n", ((doc_int16_t*)variable)->value);
+        break;
+        case dt_int8:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS, "{%i}\n", ((doc_int8_t*)variable)->value);
+            else
+                printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS + strlen(variable->name), "%s=%i\n", ((doc_int8_t*)variable)->value);
+        break;
+
+        case dt_null:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, 1, "{}\n");
+            else
+                printf_stringify(stream, length, 1 + strlen(variable->name), "%s=\n", variable->name);
+        break;
+        case dt_bool:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, 5, "{%s}\n", (((doc_bool*)variable)->value ? "true" : "false"));
+            else
+                printf_stringify(stream, length, 5 + strlen(variable->name), "%s=%s\n", variable->name, (((doc_bool*)variable)->value ? "true" : "false"));
+        break;
+        
+        case dt_string:
+        case dt_const_string:
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, ((doc_string*)variable)->len, "{%s}\n", ((doc_string*)variable)->string);
+            else
+                printf_stringify(stream, length, ((doc_string*)variable)->len + strlen(variable->name), "%s=%s\n", variable->name, ((doc_string*)variable)->string);
+        break;
+
+        case dt_bindata:
+        case dt_const_bindata:
+            buffer = base64_encode(((doc_bindata*)variable)->data, ((doc_bindata*)variable)->len); 
+            buffer_size = strlen(buffer);
+            
+            if(*(variable->name) == '\0')
+                printf_stringify(stream, length, buffer_size + 1, "{%s}\n", buffer);
+            else
+                printf_stringify(stream, length, buffer_size + 1 + strlen(variable->name), "%s=%s\n", variable->name, buffer);
+
+            free(buffer);
+        break;
+    }
+}
+
+// stringify to ini
+static char *stringify(doc *variable, char **stream, size_t *length){
+    switch(variable->type){
+        case dt_obj:
+        case dt_array:
+            printf_stringify(stream, length, strlen(variable->name), "[%s]\n", variable->name);
+
+            for(doc_loop(member, variable))
+                stringify(member, stream, length);
+            
+        break;
+
+        default:
+            print_value(variable, stream, length);
+        break;
+    }
+}
+
 /* ----------------------------------------- Functions -------------------------------------- */
 
 // parses a ini/cfg text file into a doc structure 
@@ -202,6 +361,18 @@ doc *doc_ini_parse(char *ini_file_stream){
     return doc_ini;
 }
 
-doc *doc_ini_stringify(doc *doc_ini){
-    
+char *doc_ini_stringify(doc *doc_ini){
+    char *ini_stream = calloc(1, sizeof(*ini_stream));
+    size_t ini_stream_len = 1;
+
+    if(doc_ini->type != dt_obj)
+        return NULL;
+
+    doc_squash(doc_ini, ".", 2);
+
+    for(doc_loop(member, doc_ini)){
+        stringify(member, &ini_stream, &ini_stream_len);
+    }
+
+    return ini_stream;
 }

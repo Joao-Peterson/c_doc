@@ -21,19 +21,27 @@ char *fstream(char *filename){
 
 int main(int argc, char **argv){
 
-    if(argc < 3) return 0;
-
-    char *json_stream = fstream(argv[1]);
+    char *json_stream = fstream("test/1.json");
 
     if(json_stream == NULL) return 0;
 
     doc *json = doc_json_parse(json_stream);
 
-    int depth = atoi(argv[2]);
+    int depth = 5;
     doc_squash(json, ".", depth);
 
     doc_print_file_set(fprintf, stdout);
     doc_print(json);
+
+    char *ini_out_stream = doc_ini_stringify(json);
+
+    FILE *ini_out = fopen("test/ini_out.ini", "w+");
+    fwrite(ini_out_stream, 1, strlen(ini_out_stream), ini_out);
+    fclose(ini_out); 
+
+    free(ini_out_stream);
+    free(json_stream);
+    doc_delete(json, ".");
 
     return 0;
 }

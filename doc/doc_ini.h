@@ -18,4 +18,6 @@
  */
 doc *doc_ini_parse(char *ini_file_stream);
 
+char *doc_ini_stringify(doc *doc_ini);
+
 #endif
