@@ -357,7 +357,7 @@ static doc *get_variable_ptr(doc *object_or_array, char *path){
         var_name_next++;                                                            // points to other name
     }
     
-    if((var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
+    if(var_name[1] == ']' && (var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
     
         doc_size_t index = strtoull(var_name, NULL, 10);
 
@@ -397,8 +397,6 @@ static doc *get_variable_ptr(doc *object_or_array, char *path){
             cursor = cursor->next;
         }while(cursor != NULL);
     }
-
-
 
     free(name_cpy_base);
     return NULL;

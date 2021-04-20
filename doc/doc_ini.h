@@ -18,6 +18,20 @@
  */
 doc *doc_ini_parse(char *ini_file_stream);
 
+/**
+ * @brief generates a ini/cfg file based on a doc data structure
+ * @note each varaible inside will be a global variable inside the ini file,
+ * variables insides objects or arrays will be placed below the section with same name
+ * as the obj/array. Values with '#' and ';' will be placed as string literals, surrounded
+ * by double quotes. Empty variables will be place with the name and a equal sign. Anonymous
+ * values will be placed surrounded by curly brackets. 
+ * Before the call to the stringify the data, a doc_squash is made, to be sure that the
+ * data strucure is at most 2 levels deep, that is because this lib doesn't implement
+ * nested sections, so every value must be at most inside a global object/array, that will
+ * become a section.
+ * @param doc_ini: Pointer to doc data structure
+ * @return ASCII stream with the file
+ */
 char *doc_ini_stringify(doc *doc_ini);
 
 #endif

@@ -4,19 +4,30 @@
 
 #define WHITESPACE                  " \t\n\r\v\f"                                   // white space chars
 
-#define UINT64_MAX_DECIMAL_CHARS    (20)                                            // decimal digits of max uint64 number, 64/log2(10) = 63/3.322 = 20
-#define FLOAT_MAX_DECIMAL_CHARS     (27)                                            // decimal digits of max float number, 1.428571428571428492127e-01 is the biggest
-#define FLOAT_DECIMAL_PLACES        (10)                                            // 1.428571428571428492127e-01 has 21 decimal places
+#define UINT64_MAX_DECIMAL_CHARS_XML    (20)                                        // decimal digits of max uint64 number, 64/log2(10) = 63/3.322 = 20
+#define FLOAT_MAX_DECIMAL_CHARS_XML     (27)                                        // decimal digits of max float number, 1.428571428571428492127e-01 is the biggest
 
-// data type for rational javascript numbers
-#define RATIONAL_TYPE (dt_double)                                                   // to be put on 'type' member of 'doc'
-#define strto_rational(const_char_ptr_string, const_char_ptr_ptr_endptr) strtod(const_char_ptr_string, const_char_ptr_ptr_endptr)               // to convert to number
-typedef doc_double      rational_number_t;                                          // to allocate the correct 'doc_*' type
-                                                                                    
-// data type for integer javascript numbers
-#define INTEGER_TYPE (dt_int32)                                                     // to be put on 'type' member of 'doc'
-#define strto_integer(const_char_ptr_string, const_char_ptr_ptr_endptr) atoi(const_char_ptr_string)                                             // to convert to number
-typedef doc_int32_t     integer_number_t;                                           // to allocate the correct 'doc_*' type
+/* ----------------------------------------- Private Globals -------------------------------- */
+
+static const char *NUMBER_INTEGER_ALPHABET = "0123456789-+";
+static const char *NUMBER_DECIMAL_ALPHABET = "0123456789.,eE-+";
+
+/* ----------------------------------------- Numeric values config -------------------------- */
+
+typedef int64_t             integer_ini_t;                                          // type for integer values
+#define integer_ini_doc_xml dt_int64                                                // doc type for integer values
+
+#define strto_integer_xml(const_char_ptr_string, const_char_ptr_ptr_endptr) \
+    atoi(const_char_ptr_string)                                                     // function to convert from string to integer
+
+
+#define FLOAT_DECIMAL_PLACES_XML    (5)                                             // decimal places after dot on decimals
+#define decimal_print_format_xml    "%#.*G"                                          // to print decimal values    
+typedef double              decimal_ini_t;                                          // type for decimal values
+#define decimal_ini_doc_xml dt_double                                               // doc type for decimal values
+
+#define strto_rational_xml(const_char_ptr_string, const_char_ptr_ptr_endptr) \
+    strtod(const_char_ptr_string, const_char_ptr_ptr_endptr)                        // function to convert from string to decimal
 
 /* ----------------------------------------- Private functions ------------------------------ */
 
@@ -49,6 +60,119 @@ static void printf_stringify(char **string_start_address, size_t *length, size_t
     va_end(args);
 }
 
+// check if a string if formed by just members of a defined alphabet 
+static bool str_alphabet(char *string, char *alphabet){
+    bool flag = true;
+    size_t len = strlen(string);
+    size_t counter = strlen(alphabet);
+
+    if(*string == '\0') return false;                                               // empty string
+
+    for(size_t i = 0; i < len; i++){
+        bool check = false;
+
+        for(size_t j = 0; j < counter; j++){
+            if(string[i] == alphabet[j]){
+                check = true; 
+                break;
+            }
+        }
+
+        if(!check){
+            flag = false;
+            break;
+        }
+    }
+
+    return flag;
+}
+
+// check how many times a char appears in a string
+static size_t strnchr(char *string, char chr){
+    size_t count = 0;
+
+    for(size_t i = 0; i < strlen(string); i++){
+        if(string[i] == chr)
+            count++;
+    }
+
+    return count;
+}
+
+// check if string represents a number
+static bool str_is_number(char *string){
+    run_whitespace(&string);
+
+    if( (*string < '0' && *string > '9') && *string != '+' && *string != '-')
+        return false;
+
+    if( strnchr(string, '-') > 1 || 
+        strnchr(string, '+') > 1 || 
+        strnchr(string, '.') > 1 ||
+        strnchr(string, ',') > 1 ||
+        strnchr(string, 'e') > 1 ||
+        strnchr(string, 'E') > 1
+    )
+        return false;
+
+    return true;
+}
+
+// check the value of a string representation of the value
+static doc_type_t check_value_type(char *value){
+    if(!strcmp(value, "true") || !strcmp(value, "false")){                          // boolean
+        return dt_bool;
+    }
+    else if(str_alphabet(value, (char *)NUMBER_INTEGER_ALPHABET)){                  // integer                                  
+        if(str_is_number(value))
+            return integer_ini_doc_xml;
+        else
+            return dt_string;
+    }
+    else if(str_alphabet(value, (char *)NUMBER_DECIMAL_ALPHABET)){                  // decimal                                  
+        if(str_is_number(value))
+            return decimal_ini_doc_xml;
+        else
+            return dt_string;
+    }
+    else{                                                                           // string
+        return dt_string;
+    }
+}
+
+// create a doc from a string with an appropriate value type
+static doc *doc_from_string(char *name, char *value_string){
+    doc_type_t type = check_value_type(value_string);
+    doc *variable;
+    bool boolean_buf;
+
+    switch(type){
+        case decimal_ini_doc_xml:
+            variable = doc_new(name, decimal_ini_doc_xml, strto_rational_xml(value_string, NULL));
+        break;
+
+        case integer_ini_doc_xml:
+            variable = doc_new(name, integer_ini_doc_xml, strto_integer_xml(value_string, NULL));
+        break;
+
+        case dt_bool:
+            if(!strcmp(value_string, "true"))
+                boolean_buf = true;
+            else
+                boolean_buf = false;
+
+            variable = doc_new(name, dt_bool, boolean_buf);
+        break;
+        
+        case dt_string:
+        default:
+            variable = doc_new(name, dt_string, value_string, strlen(value_string) + 1);
+        break;  
+    }
+
+    return variable;
+}
+
 /* ----------------------------------------- Parser ----------------------------------------- */
 
 // parse a single value string
@@ -63,7 +187,7 @@ static doc *parse_value(char **stream){
     char hold = (**stream);
     (**stream) = '\0';
 
-    doc *variable = doc_new(NULL, dt_string, value, (*stream) - value + 1);
+    doc *variable = doc_from_string("", value);
 
     (**stream) = hold;
 
@@ -82,7 +206,7 @@ static doc *parse_atribute(char **stream){
     marker = strpbrk(value, "\"");
     *marker = '\0';
 
-    doc *atribute = doc_new(name, dt_string, value, marker - value + 1);
+    doc *atribute = doc_from_string(name, value);
 
     marker++;
     *stream = marker;
@@ -103,12 +227,18 @@ static doc *parse_tag(char **stream){
     bool self_terminated = false;
     bool last_atribute = false;
 
-    *stream = strpbrk(name, WHITESPACE ">");                                        // get name and create doc
+    *stream = strpbrk(name, WHITESPACE ">/");                                        // get name and create doc
     char hold_char = **stream;
     (**stream) = '\0';
     tag = doc_new(name, dt_obj, ";");                               
 
-    if(hold_char != '>'){
+    if(hold_char == '/'){
+        (*stream)++;
+        *stream = strpbrk(*stream, ">");
+        (*stream)++;
+        self_terminated = true;
+    }
+    else if(hold_char != '>'){
         (*stream)++;
         doc_add(tag, ".", "atributes", dt_obj, ";");
         while(1){                                                                   // run through atributes
@@ -198,86 +328,86 @@ static void printf_stringify_value(char **base_address, size_t *length, doc *var
     switch(variable->type){
         case dt_double:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name), "<%s>%.*G</%s>", variable->name, FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name), "<%s>%.*G</%s>", variable->name, FLOAT_DECIMAL_PLACES_XML, ((doc_double *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name), "%.*G", FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name), "%.*G", FLOAT_DECIMAL_PLACES_XML, ((doc_double *)(variable))->value);
         break;
             
         case dt_float:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name), "<%s>%.*G</%s>", variable->name, FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name), "<%s>%.*G</%s>", variable->name, FLOAT_DECIMAL_PLACES_XML, ((doc_float *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name), "%.*G", FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name), "%.*G", FLOAT_DECIMAL_PLACES_XML, ((doc_float *)(variable))->value);
         break;
 
         case dt_int:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%i</%s>", variable->name, ((doc_int *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%i", ((doc_int *)(variable))->value);
         break;
  
         case dt_int8:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int8_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%i</%s>", variable->name, ((doc_int8_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int8_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%i", ((doc_int8_t *)(variable))->value);
         break;
  
         case dt_int16:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int16_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%i</%s>", variable->name, ((doc_int16_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int16_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%i", ((doc_int16_t *)(variable))->value);
         break;
  
         case dt_int32:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int32_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%i</%s>", variable->name, ((doc_int32_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int32_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%i", ((doc_int32_t *)(variable))->value);
         break;
  
         case dt_int64:        
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%i</%s>", variable->name, ((doc_int64_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%i</%s>", variable->name, ((doc_int64_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%i", ((doc_int64_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%i", ((doc_int64_t *)(variable))->value);
         break;
  
         case dt_uint:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%u</%s>" , variable->name, ((doc_uint_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%u", ((doc_uint_t *)(variable))->value);
         break;
  
         case dt_uint8:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint8_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%u</%s>" , variable->name, ((doc_uint8_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint8_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%u", ((doc_uint8_t *)(variable))->value);
         break;
  
         case dt_uint16:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint16_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%u</%s>" , variable->name, ((doc_uint16_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint16_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%u", ((doc_uint16_t *)(variable))->value);
         break;
  
         case dt_uint32:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint32_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%u</%s>" , variable->name, ((doc_uint32_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint32_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%u", ((doc_uint32_t *)(variable))->value);
         break;
  
         case dt_uint64:
             if(use_tags)
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "<%s>%u</%s>" , variable->name, ((doc_uint64_t *)(variable))->value, variable->name);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "<%s>%u</%s>" , variable->name, ((doc_uint64_t *)(variable))->value, variable->name);
             else
-                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS, "%u", ((doc_uint64_t *)(variable))->value);
+                printf_stringify(base_address, length, 2*strlen(variable->name) + UINT64_MAX_DECIMAL_CHARS_XML, "%u", ((doc_uint64_t *)(variable))->value);
         break;
 
         case dt_bool:

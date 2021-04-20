@@ -14,9 +14,9 @@
 #define TERMINATORS                 (",}]")                                         // to check end of member, obj or array
 #define WHITE_SPACE                 (" \t\n\r\v\f")                                 // white space chars
 
-#define UINT64_MAX_DECIMAL_CHARS    (20)                                            // decimal digits of max uint64 number, 64/log2(10) = 63/3.322 = 20
-#define FLOAT_MAX_DECIMAL_CHARS     (27)                                            // decimal digits of max float number, 1.428571428571428492127e-01 is the biggest
-#define FLOAT_DECIMAL_PLACES        (10)                                            // 1.428571428571428492127e-01 has 21 decimal places
+#define UINT64_MAX_DECIMAL_CHARS_JSON    (20)                                       // decimal digits of max uint64 number, 64/log2(10) = 63/3.322 = 20
+#define FLOAT_MAX_DECIMAL_CHARS_JSON     (27)                                       // decimal digits of max float number, 1.428571428571428492127e-01 is the biggest
+#define FLOAT_DECIMAL_PLACES_JSON        (10)                                       // 1.428571428571428492127e-01 has 21 decimal places
 
 // data type for rational javascript numbers
 #define RATIONAL_TYPE (dt_double)                                                   // to be put on 'type' member of 'doc'
@@ -271,12 +271,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
 
         case dt_double:
             value_len = strlen(variable->name) + 4;
-            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS, sizeof(*value));     
+            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES_JSON, ((doc_double *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%.*G", FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%.*G", FLOAT_DECIMAL_PLACES_JSON, ((doc_double *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -285,12 +285,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
             
         case dt_float:
             value_len = strlen(variable->name) + 4;
-            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS, sizeof(*value));     
+            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, sizeof(*value));     
             
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES_JSON, ((doc_float *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%.*G", FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%.*G", FLOAT_DECIMAL_PLACES_JSON, ((doc_float *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -299,12 +299,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
 
         case dt_int:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%i", variable->name, ((doc_int *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%i", ((doc_int *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -313,12 +313,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int8:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%i", variable->name, ((doc_int8_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%i", ((doc_int8_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -327,12 +327,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int16:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%i", variable->name, ((doc_int16_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%i", ((doc_int16_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -341,12 +341,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int32:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
             
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%i", variable->name, ((doc_int32_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%i", ((doc_int32_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -355,12 +355,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int64:        
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%i", variable->name, ((doc_int64_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%i", ((doc_int64_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -369,12 +369,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%u", variable->name, ((doc_uint_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%u", ((doc_uint_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -383,12 +383,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint8:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%u", variable->name, ((doc_uint8_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%u", ((doc_uint8_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -397,12 +397,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint16:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%u", variable->name, ((doc_uint16_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%u", ((doc_uint16_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -411,12 +411,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint32:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%u", variable->name, ((doc_uint32_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%u", ((doc_uint32_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -425,12 +425,12 @@ static void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint64:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_JSON + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "\"%s\":%u", variable->name, ((doc_uint64_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_JSON, "%u", ((doc_uint64_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);

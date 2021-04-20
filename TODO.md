@@ -2,11 +2,13 @@ Important:
 
 - Error handling inside parsers and stringifiers and refactoring to prevent segfaults
 
-- Json parser accept numbers as variable name, check array indexing only when '[' is found
+- Rewrite documnetation
+
+- Export doc_from_string() to doc.c
+
+- Implement direct calls from/to files, using filenames as parameters
 
 Features :
-
-- numeric values interpretation on xml parser and ini parser
 
 - Data serialization (binary)
 

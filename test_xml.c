@@ -32,7 +32,7 @@ int main(int argc, char **argv){
 
     doc *xml = doc_xml_parse(xml_stream);
 
-    // doc_print(xml);
+    doc_print(xml);
 
     char *xml_string = doc_xml_stringify(xml);
 

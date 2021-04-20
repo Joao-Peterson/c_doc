@@ -13,7 +13,7 @@ L_FLAGS :=
 EXE:= main.exe
 
 SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c doc/doc_print.c
-TEST_SOURCE := test_ini.c
+TEST_SOURCE := test.c
 HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h doc/doc_print.h
 
 VERSION := 1.5

@@ -438,7 +438,7 @@ void doc_squash(doc *variable, char *name, doc_size_t max_depth);
  * @param ...: as optional argument to char* and uint8_t* types, the len should be specified
  */
 #define doc_set(variable, name, type, new_value, ...) \
-    if(__check_string_bindata(doc_get_ptr(obj, name))){ \
+    if(__check_string_bindata(doc_get_ptr(variable, name))){ \
         ((doc_bindata*)doc_get_ptr(variable, name))->len = strtoull(#__VA_ARGS__, NULL, 10); \
     } \
     *(type*)((void*)__check_obj_is_value(doc_get_ptr(variable,name)) + sizeof(doc)) = new_value
