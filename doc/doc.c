@@ -21,12 +21,11 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
+#include "parse_utils.h"
 
 /* ----------------------------------------- Private definitions ------------------------------ */
 
 #define ERR_TO_STRUCT(err)  {err, #err} 
-
-/* ----------------------------------------- Private Enum's ----------------------------------- */
 
 /* ----------------------------------------- Private Struct's --------------------------------- */
 
@@ -39,48 +38,47 @@ typedef struct{
 /* ----------------------------------------- Private Globals -------------------------------- */
 
 // dummy instance to receive macros operations, to not generate segfault
-doc_uint64_t dummy_doc_internal = { .value = 0xFFFFFFFFFFFFFFFF, .header = { .name = "dummy", .type = dt_null, .parent = NULL, .child = NULL, .next = NULL, .prev = NULL, } };
-doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
+static doc_uint64_t dummy_doc_internal = { .value = 0xFFFFFFFFFFFFFFFF, .header = { .name = "dummy", .type = dt_null, .parent = NULL, .child = NULL, .next = NULL, .prev = NULL, } };
+static doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
 
 // ilegal ascii characters on names
-const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,-.\\";
+static const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,.\\";
 
 // internal error vars, the char * one holds information about the name of instance to be acted on
-errno_doc_code_t errno_doc_code_internal = 0;
-char *errno_msg_doc_internal = NULL;
+static errno_doc_code_t errno_doc_code_internal = 0;
+static char *errno_msg_doc_internal = NULL;
 
 // array to get the value and name of defined errors 
-const errno_doc_t errno_doc_msg_code_array[] = {
+static const errno_doc_t errno_doc_msg_code_array[] = {
     ERR_TO_STRUCT(errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first),
     ERR_TO_STRUCT(errno_doc_ok),
     ERR_TO_STRUCT(errno_doc_not_a_type),
     ERR_TO_STRUCT(errno_doc_overflow_quantity_members_or_name_is_too_big),
     ERR_TO_STRUCT(errno_doc_value_not_same_type_as_array),
     ERR_TO_STRUCT(errno_doc_duplicate_names),
-    ERR_TO_STRUCT(errno_doc_null_passed_obj),
+    ERR_TO_STRUCT(errno_doc_null_passed_doc_ptr),
     ERR_TO_STRUCT(errno_doc_value_not_found),
     ERR_TO_STRUCT(errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator),
     ERR_TO_STRUCT(errno_doc_trying_to_add_new_data_to_non_object_or_non_array),
     ERR_TO_STRUCT(errno_doc_trying_to_get_data_from_non_object_or_non_array),
     ERR_TO_STRUCT(errno_doc_trying_to_set_value_of_non_value_type_data_type),
     ERR_TO_STRUCT(errno_doc_trying_to_set_string_of_non_string_data_type),
-    ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type)
+    ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type),
+    ERR_TO_STRUCT(errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data),
+    ERR_TO_STRUCT(errno_doc_null_passed_parameter)
 };
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
 // allocate and copy data
-void *_mem_alloc_cpy(void *data, size_t size, size_t elements){
+static void *_mem_alloc_cpy(void *data, size_t size, size_t elements){
     void *buffer = calloc(1, size*elements);
     memcpy(buffer, data, size*elements);
     return buffer;
 }
 
-// macro for type agnostic
-#define mem_alloc_cpy(data, type, size)   (_mem_alloc_cpy((void*)data, sizeof(type), size))
-
 // check instance for name duplicates
-int is_name_duplicate(doc *obj_or_array, char *name){
+static int is_name_duplicate(doc *obj_or_array, char *name){
     doc *cursor = obj_or_array->child;
     if(cursor == NULL)
         return -1; // empty object
@@ -96,18 +94,23 @@ int is_name_duplicate(doc *obj_or_array, char *name){
 }
 
 // parse the syntax and build the data structure recursevily
-doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
+static doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
     if(!IS_DOC_TYPE(type)){
         errno_msg_doc_internal = name;
         errno_doc_code_internal = errno_doc_not_a_type;
         return NULL;
     }
 
-    char *char_veri = strpbrk(name,illegal_chars_doc_name);
-    if( char_veri != NULL){
-        errno_doc_code_internal = errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator;
-        errno_msg_doc_internal = name;
-        return NULL;
+    if(name != NULL){
+        char *char_veri = strpbrk(name,illegal_chars_doc_name);
+        if( char_veri != NULL){
+            errno_doc_code_internal = errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator;
+            errno_msg_doc_internal = name;
+            return NULL;
+        }
+    }
+    else{
+        name = "";
     }
 
     uint8_t *buffer;
@@ -326,10 +329,10 @@ doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
 }
 
 // get pointer to instance
-doc *get_variable_ptr(doc *object_or_array, char *path){
+static doc *get_variable_ptr(doc *object_or_array, char *path){
     
     if(object_or_array == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal = path;
         return NULL;
     }
@@ -354,7 +357,7 @@ doc *get_variable_ptr(doc *object_or_array, char *path){
         var_name_next++;                                                            // points to other name
     }
     
-    if((var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
+    if(var_name[1] == ']' && (var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
     
         doc_size_t index = strtoull(var_name, NULL, 10);
 
@@ -395,18 +398,83 @@ doc *get_variable_ptr(doc *object_or_array, char *path){
         }while(cursor != NULL);
     }
 
-
-
     free(name_cpy_base);
     return NULL;
 }
+
+// recusive doc squash call
+static doc *squash(doc *variable, doc_size_t max_depth, doc_size_t depth){
+    if(variable == NULL) return NULL;
+    
+    switch(variable->type){
+        case dt_array:                                                              // call squash on childsn then delet itself
+        case dt_obj:
+        
+            for(doc_loop(member, variable)){
+                member = squash(member, max_depth, depth + 1);
+            }
+
+            doc *rtn = variable;
+
+            if(depth >= max_depth){
+                doc *last = variable->child;
+
+                while(last->next != NULL){
+                    last->parent = variable->parent;
+                    variable->parent->childs++;
+                    last = last->next;
+                }
+                last->parent = variable->parent;
+                variable->parent->childs++;
+
+                variable->child->prev = variable->prev;
+                if(variable->prev != NULL)
+                    variable->prev->next = variable->child;
+
+                last->next = variable->next;
+                if(variable->next != NULL)
+                    variable->next->prev = last;
+
+                if(variable->parent->child == variable){
+                    variable->parent->child = variable->child;
+                }
+
+                variable->parent->childs--;
+
+                variable->child = NULL;
+                variable->next = NULL;
+                variable->prev = NULL;
+                variable->parent = NULL;
+                doc_delete(variable, ".");
+
+                rtn = last;
+            }
+
+            return rtn;
+        break;
+
+        default:                                                                    // squash it, place it next to parent
+            // if(depth >= max_depth){
+            //    
+            // }
+            
+            return variable;
+        break;
+    }
+}
+
+
+/* ----------------------------------------- Private Macros --------------------------------- */
+
+// macro for type agnostic
+#define mem_alloc_cpy(data, type, size)   (_mem_alloc_cpy((void*)data, sizeof(type), size))
 
 
 // Macro checking ----------------------------------
 
 // check to see if is a string or binary data type
-bool __check_string_bindata(doc *value){
-    switch(value->type){
+bool __check_string_bindata(doc *variable){
+    switch(variable->type){
         case dt_string:
         case dt_const_string:
         case dt_bindata:
@@ -421,20 +489,20 @@ bool __check_string_bindata(doc *value){
 }
 
 // check if obj if a value
-doc *__check_obj_is_value(doc *obj){    
-    switch (obj->type)
+doc *__check_obj_is_value(doc *variable){    
+    switch (variable->type)
     {
         case dt_array:
         case dt_obj:
         case dt_null:
             errno_doc_code_internal = errno_doc_trying_to_set_value_of_non_value_type_data_type;
-            errno_msg_doc_internal = obj->name;
+            errno_msg_doc_internal = variable->name;
             return dummy_doc_internal_ptr;
         break;
 
         default:
             errno_doc_code_internal = errno_doc_ok;
-            return obj;
+            return variable;
         break;
     }
 }
@@ -446,10 +514,17 @@ int __doc_get_error_code(void){
 
 // check object for the for loop iterator macro
 doc *__check_obj_ite_macro(doc *obj){
-    if (obj == NULL || (obj->type != dt_obj && obj->type != dt_array))
-        return NULL;
-    else
-        return obj->child;
+    if (obj == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
+        return dummy_doc_internal_ptr;
+    }
+    else if(obj->type != dt_obj && obj->type != dt_array){
+        errno_doc_code_internal = errno_doc_trying_to_get_data_from_non_object_or_non_array;
+        return dummy_doc_internal_ptr;
+    }
+    else{
+        return obj;
+    }
 }
 
 /* ----------------------------------------- Functions -------------------------------------- */
@@ -537,6 +612,7 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
 
     variable->childs++;
 
+    new_variable->parent = variable;
     if(variable->child == NULL){
         variable->child = new_variable;
     }
@@ -554,86 +630,88 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
 }
 
 // delete element denoted by 'name'
-void doc_delete(doc *object_or_array, char *name){
-    
-    doc *variable = get_variable_ptr(object_or_array, name);                    // get pointer to instance
-    if(variable == NULL)
+void doc_delete(doc *variable, char *name){
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
+        errno_msg_doc_internal = name;
         return;
+    }
 
-    switch(variable->type){                                                     
+    doc *var = get_variable_ptr(variable, name);                                    // get pointer to instance
+    
+    if(var == NULL){
+        errno_doc_code_internal = errno_doc_value_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    switch(var->type){                                                     
         case dt_array:                                                              // in case of a entire OBJ OR ARRAY
         case dt_obj:
-            while(variable->child == NULL){
-                doc_delete(variable->child, ".");
+            for(doc* member = var->child; member != NULL; member = var->child){
+                doc_delete(member, ".");
             }
-            
-            free(variable);
         break;
 
-        default:                                                                    // in case of a VALUE element
+        case dt_string:
+            free(((doc_string*)var)->string);
+        break;
 
-            if(variable->prev == NULL && variable->next == NULL){                   // last elemen of obj or array 
-                variable->parent->child = NULL;
-            }
-            else if(variable->parent->child == variable){                           // first element of an object or array
-                variable->parent->child = variable->next;
-                variable->next->prev = NULL;
-            }
-            else if(variable->next == NULL){                                        // last element of an object or array
-                variable->prev->next = NULL;
-            }
-            else{                                                                   // an element of a object or array
-                variable->prev->next = variable->next;
-                variable->next->prev = variable->prev;
-            }
-
-            free(variable->name);
-
-            switch(variable->type){                                                 // if non const type of string and bindata, free its content as well
-                case dt_string:
-                    free(((doc_string*)variable)->string);
-                    free(variable);                    
-                break;
-
-                case dt_bindata:
-                    free(((doc_bindata*)variable)->data);
-                    free(variable);                    
-                break;
-
-                default:
-                    free(variable);
-                break;
-            }
-
+        case dt_bindata:
+            free(((doc_bindata*)var)->data);
         break;
     }
+
+    if(var->parent != NULL){                                                        // if the variable is not a child, then is not part of an array, making next and prev pointer manipulation unnecessary 
+        if(var->prev == NULL && var->next == NULL){                                 // last 1 elements 
+            var->parent->child = NULL;
+            var->parent->childs = 0;
+        }
+        else if(var->parent->child == var){                                         // first element 
+            var->parent->child = var->next;
+            var->next->prev = NULL;
+            var->parent->childs--;
+        }
+        else if(var->next == NULL){                                                 // last element
+            var->prev->next = var->next;
+            var->parent->childs--;
+        }
+        else{                                                                       // any in middle element 
+            var->prev->next = var->next;
+            var->next->prev = var->prev;
+            var->parent->childs--;
+        }
+    }
+
+    free(var->name);
+    free(var);
 
     errno_doc_code_internal = errno_doc_ok;
 }
 
 // get pointer to element
-doc* doc_get_ptr(doc* object_or_array, char *name){
-    doc *variable = get_variable_ptr(object_or_array, name);
+doc* doc_get_ptr(doc* variable, char *name){
+    doc *var = get_variable_ptr(variable, name);
 
-    if(variable == NULL){
+    if(var == NULL){
         errno_doc_code_internal = errno_doc_value_not_found;
         errno_msg_doc_internal  = name;
         return NULL; 
     }
 
     errno_doc_code_internal = errno_doc_ok;
-    return variable;
+    return var;
 }
 
 // get array and obj childs amount
-doc_size_t doc_get_size(doc *value, char *name){
-    if(value == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+doc_size_t doc_get_size(doc *variable, char *name){
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal = NULL;
         return 0;
     }
     
-    doc *var = get_variable_ptr(value, name);
+    doc *var = get_variable_ptr(variable, name);
     doc_size_t size;
 
     if(var == NULL){
@@ -707,7 +785,7 @@ doc_size_t doc_get_size(doc *value, char *name){
 // appends a already made variable to a object or array
 void doc_append(doc *object_or_array, char *name, doc *variable){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return;
     }
@@ -726,9 +804,9 @@ void doc_append(doc *object_or_array, char *name, doc *variable){
         return;
     }
 
+    variable->parent = obj;
     if(obj->child == NULL){
         obj->child = variable;
-        variable->parent = obj;
     }
     else{
         doc *cursor = obj->child;
@@ -748,7 +826,7 @@ void doc_append(doc *object_or_array, char *name, doc *variable){
 // allocate and copy a variable
 doc *doc_copy(doc *variable, char *name){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return NULL; 
     }
@@ -886,7 +964,7 @@ doc *doc_copy(doc *variable, char *name){
 // rename variable
 void doc_rename(doc *variable, char *name, char *new_name){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return;
     }
@@ -901,4 +979,57 @@ void doc_rename(doc *variable, char *name, char *new_name){
     
     free(variable->name);
     variable->name = (char*)mem_alloc_cpy(new_name, char, strlen(new_name) + 1);
+}
+
+// squash a variable and its childs by a maximun nesting depth
+void doc_squash(doc *variable, char *name, doc_size_t max_depth){
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
+        errno_msg_doc_internal  = variable->name;
+        return;
+    }
+
+    variable = get_variable_ptr(variable, name);
+
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_value_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
+    
+    switch(variable->type){
+
+        case dt_obj:
+        case dt_array:
+            if(max_depth == 0){
+                errno_doc_code_internal = errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data;
+                errno_msg_doc_internal = name;
+                return;
+            }
+            else{
+                squash(variable, max_depth, 0);
+            }
+        break;
+
+        default:
+            return;
+        break;
+    }
+}
+
+// create a new automatic doc variable from a string
+doc *doc_from_string(char *name, char *string){
+    if(name == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_parameter;
+        errno_msg_doc_internal = "parameter: name";
+        return NULL;
+    }
+    
+    if(string == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_parameter;
+        errno_msg_doc_internal = "parameter: string";
+        return NULL;
+    }
+    
+    return create_doc_from_string(name, string);
 }

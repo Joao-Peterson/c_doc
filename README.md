@@ -19,9 +19,12 @@ Version: v1.4
 * [Functions](#functions)
 * [Iteration](#iteration)
 * [Error checking](#error-checking)
+* [Printing](#printing)
 * [Struct interfaces](#struct-interfaces)
 * [Parse and Stringify](#parse-and-stringify)
     * [JSON](#json)
+    * [XML](#xml)
+    * [INI](#ini)
 
 ### Compilation
 
@@ -328,17 +331,86 @@ You can also get the size of any type with *doc_get_size*, depending on the type
     doc_size_t string_size = doc_get_size(obj, "string");
 ```
 
+Nested objects can be squashed so that a maximun depth of nesting is complied using the `doc_squash()` call:
+
+Before:
+
+```c
+    "medidas", dt_obj,
+        "m1", dt_const_string, "bruh", 5,
+        "M1", dt_uint32, 35420,
+        "data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
+        "nested", dt_obj,
+            "more_data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
+        ";"
+    ";"
+```
+
+After, with max depth 2:
+
+```c
+    doc_squash(obj, 2);
+```
+```c
+    "medidas", dt_obj,
+        "m1", dt_const_string, "bruh", 5,
+        "M1", dt_uint32, 35420,
+        "data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
+        "nested", dt_obj,
+            "more_data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
+        ";"
+    ";"
+```
+
+After, with max depth 1:
+
+```c
+    doc_squash(obj, 1);
+```
+```c
+    "medidas", dt_obj,
+        "m1", dt_const_string, "bruh", 5,
+        "M1", dt_uint32, 35420,
+        "data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
+        "more_data", dt_const_bindata, "AAAAAAAAAAAAAAAAAAA", 20, 
+    ";"
+```
+
+Depth 0 is not a thing, since an object would be turned into various values, wich is impossibe. This also implies that every call should pass a doc object or array, a single whole value would do nothing.
+
+A single doc value can be created by using the call `doc_from_string`, where you can pass a string conatining a randon value representation and the call would create a new doc variable with automatic type. Integer representation will have a `int64_t` representation, decimals and scietific notation will be type `double`, literal strings "true" and "false" will be `bool` and everything else will be a string.
+
+```c
+    doc *value = doc_from_string("value", "20-04-2021");
+```
+```c
+    "value", dt_string, "20-04-2021", 11
+```
+
+```c
+    doc *value = doc_from_string("value", "31.4e-1");
+```
+```c
+    "value", dt_double, 3.140000
+```
+
+```c
+    doc *value = doc_from_string("value", "true");
+```
+```c
+    "value", dt_bool, 1
+```
+
 ### Iteration
 
 This library provides a macro for doing iteration over a object or array.
 
 ```c
-    for(doc_ite(cursor, obj)){
+    for(doc_loop(cursor, obj)){
         printf("Member loop: %s\n", cursor->name);
     }
 ```
-The *doc_ite* sits inside the for loop, where *cursor* is the name of the iterator and *obj* the object to be iterated over. Cursor has type
-*doc* that is equal to a child of *obj*, therefore we can access the members value, like in the example where we can printf the names of the objects.
+The *doc_loop* sits inside the for loop, where *cursor* is the name of the iterator and *obj* the object to be iterated over. Cursor has type *doc* that is equal to a child of *obj*, therefore we can access the members value, like in the example where we can printf the names of the objects.
 
 ### Error checking
 
@@ -362,7 +434,7 @@ This enum has all the errors listed.
         errno_doc_overflow_quantity_members_or_name_is_too_big                                                                      = -2,
         errno_doc_value_not_same_type_as_array                                                                                      = -3,
         errno_doc_duplicate_names                                                                                                   = -4,
-        errno_doc_null_passed_obj                                                                                                   = -5,
+        errno_doc_null_passed_doc_ptr                                                                                                   = -5,
         errno_doc_value_not_found                                                                                                     = -6,
         errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator                                                = -7,
         errno_doc_trying_to_add_new_data_to_non_object_or_non_array                                                                 = -8,
@@ -372,11 +444,17 @@ This enum has all the errors listed.
     }errno_doc_code_t;
 ```
 
+### Printing
+
+While programming maybe you wish to view the data on a structure more visually, by calling `doc_print()` it will print a simple idented syntax to a output of choice, with a function of choice. Calling `doc_set()` or `doc_file_set()` you can specify a standard os custom print call, to a file output, if any. By default calling `doc_print()` will print with `fprintf()` to `stdout`.  
+
+All the calls are inside [doc_print.h](./dist/doc_print.h).
+
 ### Struct interfaces
 
 An ugly and experimental feature, but sometimes useful, for when you want to quickly add and read data to and from a doc structure from and to a normal struct. Warning, this will only work for the C language types, not user defined with *typedef*, and with non pointer types, as the unary operator will break the preprocessor macros. 
 
-Check it out, you can set two preprocessor symbols with the name and members of your struct, then include the [doc_struct](./doc/doc_struct.h) header file before your code and it will generate the actual struct and calls at compile time.
+Check it out, you can set two preprocessor symbols with the name and members of your struct, then include the [doc_struct](./dist/doc_struct.h) header file before your code and it will generate the actual struct and calls at compile time.
 
 ```c
     #define STRUCT_NAME struct_ex_t
@@ -415,7 +493,12 @@ Now you can create, read and write to a doc structure from a struct and vice ver
 
 ### Parse and Stringify
 
-The doc data structure has been made with a main idea in mind, ease handling of markdown files, widely used for data transmission, configuration data, encapsulate data, organize, and so on. So it's pretty easy to parse and create files to and from the data structure. 
+The doc data structure has been made with a main idea in mind, ease handling of markdown files, widely used for data serialization, transmission, configuration data, encapsulate data, organize, and so on. So it's pretty trivial and easy to parse and create files to and from the data structure. 
+
+Every call to parse and stringify is contained in a header file with the correponding name prefixed with *doc_*, ex: [doc_json.h](./dist/doc_json.h).
+
+All the type implementes here have a common idea, a doc data structure with a single oject inside, this will represent the file,
+so everytime you parse a file, the strucuture will have all the values encapsulated inside a single object with the file type, ex: json, xml, ini. When you want to stringify, the calls expects you to pass a structure with a single object with the values inside, this object can have any name, its only when parsing that it will be given the name of the file type. 
 
 #### JSON
 
@@ -472,3 +555,91 @@ And after:
 ```
 
 The actual output does not contain line breaks and identation, this is a prettyfied version.
+
+### XML
+
+Xml is a nested structure, with tags and atributes, thinking about that the parser and stringify calls follow a structure. Suppose we have this xml tag:
+
+```c
+    <tag atb1="1">
+        42
+    </tag>
+```
+
+It's representation as a doc data structure will be:
+
+```c
+    "tag", dt_obj,
+        "atributes", dt_obj,
+            "atb1", dt_int64_t, 1,
+        ";",
+        "", dt_int64_t, 42,
+    ";"
+```
+
+Note that the atributes will be placed inside a separate object called "atributes", with respective name and value, while the value inside the tag will be anonymous and is accessible only trought a `doc_get()` call with the `tag[1]` sytax.
+
+Another example:
+
+```c
+    <tag>
+        <another_tag/> "string"
+        3.14
+        <surprise/> "pie"
+    </tag>
+```
+
+It's representation as a doc data structure will be:
+
+```c
+    "tag", dt_obj,
+        "another_tag", dt_obj, 
+            "", dt_string, "string", 7,
+        ";",
+        "", dt_double, 3.14,
+        "surprise", dt_obj, 
+            "", dt_string, "pie", 7,
+        ";",
+    ";"
+```
+
+The xml parser works with self closing tags, and could be used to parse sgml file such as html, mathml, but this parser doesn't garantee to you that it will be correctly parsed.
+
+### INI
+
+Ini/cfg file formats implements varaibles and sections, this is very simple, as every section can be a object with variables inside of it, but they are not nested, thus when strigifying to a ini file, every nested object with more than 2 layers depth will be squashed to a upper layer, making the data structure differ from the original, this should be kept in mind, as stringifying and parsing it again can mess up the location of your variables.
+
+This parser supports comments with '#' and ';'.
+
+Empty variables like this:
+
+```c
+    value5=
+    value6
+```
+
+With and without the the equal sign, making any random token inside the file a empty variable with same name.
+
+Anonymous variables, by using the curly brackets syntax:
+
+```c
+    {VAR}
+
+    # empty anonymous variable
+    {}
+```
+
+Also, anonymous variables will be stringified to this syntax.
+
+Break sequence for strings:
+
+```c
+    cont = aaaaaaa \
+    bbbbbbbbbb
+```
+
+And string literals:
+
+```c
+    value1="#value1;"
+```

@@ -12,11 +12,11 @@ L_FLAGS :=
 
 EXE:= main.exe
 
-SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_print.c
-TEST_SOURCE := test_xml.c
-HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_print.h
+SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c doc/doc_print.c doc/parse_utils.c
+TEST_SOURCE := test.c
+HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h doc/doc_print.h doc/parse_utils.h
 
-VERSION := 1.4
+VERSION := 1.5
 
 LIB_NAME := libdoc.a
 DIST_NAME := C_doc_Win_x86_64_$(VERSION).tar.gz
@@ -34,32 +34,38 @@ TAR := tar -c -v -z -f
 #   $(filter $(subst *,%,$2),$d))
 
 OBJS := $(SOURCES:.c=.o)
-OBJS_BUILD := $(addprefix $(BUILD_DIR), $(notdir $(SOURCES:.c=.o)))
-TEST_OBJ := $(TEST_SOURCE:.c=.o)
+OBJS_BUILD := $(addprefix $(BUILD_DIR), $(OBJS))
+TEST_OBJ := $(BUILD_DIR)$(TEST_SOURCE:.c=.o)
+
+# MAKEFLAGS += --jobs=$(shell nproc)
+# MAKEFLAGS += --output-sync=target
 
 # ---------------------------------------------------------------
 
 .PHONY : build
 
 build : C_FLAGS += -g
+build : $(HEADERS)
 build : $(TEST_OBJ)
-build : $(OBJS) main
+build : $(OBJS_BUILD) $(EXE)
 
 release : C_FLAGS += -O2
-release : $(OBJS) dist
+release : $(HEADERS)
+release : clearall $(OBJS_BUILD) dist
 
-
-%.o : %.c
-	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $(addprefix $(BUILD_DIR), $(notdir $@))
+$(BUILD_DIR)%.o : %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $@
 
 
 dist : $(OBJS_BUILD)
+	@mkdir -p $(DIST_DIR)
 	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $^
 	cp $(HEADERS) $(DIST_DIR)
 
 
-main: 
-	$(CC) $(OBJS_BUILD) $(BUILD_DIR)$(TEST_OBJ) -o $(EXE)
+$(EXE): $(OBJS_BUILD) $(TEST_OBJ)
+	$(CC) $^ -o $@
 
 
 # pack : 
@@ -67,6 +73,8 @@ main:
 
 
 clear : 
-	@rm -f $(OBJS_BUILD)
-	@rm -f $(BUILD_DIR)$(TEST_OBJ)
-	@rm -f $(DIST_DIR)$(LIB_NAME)
+	rm -f $(EXE)
+
+clearall : clear
+	rm -f -r $(BUILD_DIR)*
+	rm -f -r $(DIST_DIR)*

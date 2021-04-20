@@ -1,9 +1,22 @@
 #ifndef _DOC_JSON_HEADER_
 #define _DOC_JSON_HEADER_
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "doc.h"
+#include "../base64/base64.h"
 
 /* ----------------------------------------- Functions -------------------------------------- */
+
+/**
+ * @brief opens and parses a json file to a doc structure
+ * @param filename: the path to file
+ * @return a doc data struture 
+ */
+doc *doc_json_open(char *filename);
 
 /**
  * @brief parse a file stream to a 'doc' structure

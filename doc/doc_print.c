@@ -2,7 +2,7 @@
 
 #define type_to_string(doc_type) #doc_type
 
-const char *doc_type_str_array[] = {
+static const char *doc_type_str_array[] = {
     type_to_string(dt_null),
     type_to_string(dt_obj),
     type_to_string(dt_array),
@@ -27,8 +27,8 @@ const char *doc_type_str_array[] = {
 
 FILE *out = NULL;
 
-fprint_function_t fprint_function = NULL;
-print_function_t print_function = NULL;
+static doc_fprint_function_t fprint_function = NULL;
+static doc_print_function_t print_function = NULL;
 
 typedef enum{
     use_fprint,
@@ -47,18 +47,18 @@ print_type_t print_type = 0;
         break; \
     } 
 
-void doc_print_set(print_function_t print_function_ptr){
+void doc_print_set(doc_print_function_t print_function_ptr){
     print_function = print_function_ptr;
     print_type = use_print;
 }
 
-void doc_print_file_set(fprint_function_t fprint_function_ptr, FILE *f_out){
+void doc_print_file_set(doc_fprint_function_t fprint_function_ptr, FILE *f_out){
     fprint_function = fprint_function_ptr;
     out = f_out;
     print_type = use_fprint;
 }
 
-void print_variable(doc *variable, size_t level){
+static void print_variable(doc *variable, size_t level){
     for(size_t i = 0; i < level; i++)
         print_wrapper("    ");
     
@@ -67,64 +67,64 @@ void print_variable(doc *variable, size_t level){
         case dt_array:
             print_wrapper("[%s] (%s): \n", variable->name, doc_type_str_array[variable->type]);
 
-            for(doc_ite(member, variable)){
+            for(doc_loop(member, variable)){
                 print_variable(member, level + 1);
             }
         break;
 
         case dt_null:
-            print_wrapper("[%s] (%s): null\n", variable->name, doc_type_str_array[variable->type]);
+            print_wrapper("[%s] (%s): \"null\"\n", variable->name, doc_type_str_array[variable->type]);
         break;
         
         case dt_double:
-            print_wrapper("[%s] (%s): %f\n", variable->name, doc_type_str_array[variable->type], ((doc_double*)variable)->value);
+            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], 5, ((doc_double*)variable)->value);
         break;
         case dt_float:
-            print_wrapper("[%s] (%s): %f\n", variable->name, doc_type_str_array[variable->type], ((doc_float*)variable)->value);
+            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], 5, ((doc_float*)variable)->value);
         break;
 
         case dt_bool:
-            print_wrapper("[%s] (%s): %s\n", variable->name, doc_type_str_array[variable->type], (((doc_bool*)variable)->value) ? "true" : "false");
+            print_wrapper("[%s] (%s): \"%s\"\n", variable->name, doc_type_str_array[variable->type], (((doc_bool*)variable)->value) ? "true" : "false");
         break;
         case dt_uint:
-            print_wrapper("[%s] (%s): %u\n", variable->name, doc_type_str_array[variable->type], ((doc_uint_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%u\"\n", variable->name, doc_type_str_array[variable->type], ((doc_uint_t*)variable)->value);
         break;
         case dt_uint64:
-            print_wrapper("[%s] (%s): %u\n", variable->name, doc_type_str_array[variable->type], ((doc_uint64_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%u\"\n", variable->name, doc_type_str_array[variable->type], ((doc_uint64_t*)variable)->value);
         break;
         case dt_uint32:
-            print_wrapper("[%s] (%s): %u\n", variable->name, doc_type_str_array[variable->type], ((doc_uint32_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%u\"\n", variable->name, doc_type_str_array[variable->type], ((doc_uint32_t*)variable)->value);
         break;
         case dt_uint16:
-            print_wrapper("[%s] (%s): %u\n", variable->name, doc_type_str_array[variable->type], ((doc_uint16_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%u\"\n", variable->name, doc_type_str_array[variable->type], ((doc_uint16_t*)variable)->value);
         break;
         case dt_uint8:
-            print_wrapper("[%s] (%s): %u\n", variable->name, doc_type_str_array[variable->type], ((doc_uint8_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%u\"\n", variable->name, doc_type_str_array[variable->type], ((doc_uint8_t*)variable)->value);
         break;
         case dt_int:
-            print_wrapper("[%s] (%s): %i\n", variable->name, doc_type_str_array[variable->type], ((doc_int*)variable)->value);
+            print_wrapper("[%s] (%s): \"%i\"\n", variable->name, doc_type_str_array[variable->type], ((doc_int*)variable)->value);
         break;
         case dt_int64:
-            print_wrapper("[%s] (%s): %i\n", variable->name, doc_type_str_array[variable->type], ((doc_int64_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%i\"\n", variable->name, doc_type_str_array[variable->type], ((doc_int64_t*)variable)->value);
         break;
         case dt_int32:
-            print_wrapper("[%s] (%s): %i\n", variable->name, doc_type_str_array[variable->type], ((doc_int32_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%i\"\n", variable->name, doc_type_str_array[variable->type], ((doc_int32_t*)variable)->value);
         break;
         case dt_int16:
-            print_wrapper("[%s] (%s): %i\n", variable->name, doc_type_str_array[variable->type], ((doc_int16_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%i\"\n", variable->name, doc_type_str_array[variable->type], ((doc_int16_t*)variable)->value);
         break;
         case dt_int8:
-            print_wrapper("[%s] (%s): %i\n", variable->name, doc_type_str_array[variable->type], ((doc_int8_t*)variable)->value);
+            print_wrapper("[%s] (%s): \"%i\"\n", variable->name, doc_type_str_array[variable->type], ((doc_int8_t*)variable)->value);
         break;
         
         case dt_string:
         case dt_const_string:
-            print_wrapper("[%s] (%s): %s\n", variable->name, doc_type_str_array[variable->type], ((doc_string*)variable)->string);
+            print_wrapper("[%s] (%s): \"%s\"\n", variable->name, doc_type_str_array[variable->type], ((doc_string*)variable)->string);
         break;
 
         case dt_bindata:
         case dt_const_bindata:        
-            print_wrapper("[%s] (%s): 0x", variable->name, doc_type_str_array[variable->type]);
+            print_wrapper("[%s] (%s): \"0x\"", variable->name, doc_type_str_array[variable->type]);
 
             for(doc_size_t j = 0; j < ((doc_bindata*)variable)->len; j++)
                 print_wrapper("%X", ((doc_bindata*)variable)->data[j]);

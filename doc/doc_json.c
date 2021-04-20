@@ -1,37 +1,17 @@
-#include "doc.h"
 #include "doc_json.h"
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include "../base64/base64.h"
+#include "parse_utils.h"
 
 /* ----------------------------------------- Definitions ------------------------------------ */
 
 #define VALUE_TOKEN_SEQ             ("\"-0123456789.{[tfn")                         // to find any value type, string, array, obj, number, bool or null
 #define VALUE_TOKEN_SEQ_W_SQR_BRK   ("\"-0123456789.{[tfn]")                        // same as above but with closing sqr brk, for anonymous members in arrays
 #define TERMINATORS                 (",}]")                                         // to check end of member, obj or array
-#define WHITE_SPACE                 (" \t\n\r\v\f")                                 // white space chars
-
-#define UINT64_MAX_DECIMAL_CHARS    (20)                                            // decimal digits of max uint64 number, 64/log2(10) = 63/3.322 = 20
-#define FLOAT_MAX_DECIMAL_CHARS     (27)                                            // decimal digits of max float number, 1.428571428571428492127e-01 is the biggest
-#define FLOAT_DECIMAL_PLACES        (10)                                            // 1.428571428571428492127e-01 has 21 decimal places
-
-// data type for rational javascript numbers
-#define RATIONAL_TYPE (dt_double)                                                   // to be put on 'type' member of 'doc'
-#define strto_rational(const_char_ptr_string, const_char_ptr_ptr_endptr) strtod(const_char_ptr_string, const_char_ptr_ptr_endptr)               // to convert to number
-typedef doc_double      rational_number_t;                                          // to allocate the correct 'doc_*' type
-                                                                                    
-// data type for integer javascript numbers
-#define INTEGER_TYPE (dt_int32)                                                     // to be put on 'type' member of 'doc'
-#define strto_integer(const_char_ptr_string, const_char_ptr_ptr_endptr) atoi(const_char_ptr_string)                                             // to convert to number
-typedef doc_int32_t     integer_number_t;                                           // to allocate the correct 'doc_*' type
+#define WHITE_SPACE                 (" \t\n\r\v\f")                                 // white space chars                                      // to allocate the correct 'doc_*' type
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
 // parse a string from '"' to the end '"', and cat it to the *string
-char *parse_string(char **string){
+static char *parse_string(char **string){
     (*string) = strpbrk((*string), "\"") + 1;                                           // locate string beggining
 
     char *special = (*string) - 2;                                                  // +2 because of -=2 inside do while
@@ -58,7 +38,7 @@ char *parse_string(char **string){
 }
 
 // parse a value after ':', may it be any json type and cat it to the *string, recursive
-doc *parse_value(char **string){    
+static doc *parse_value(char **string){    
     doc *variable = NULL;
     
     // char *value_begin = strpbrk((*string), ":");
@@ -184,18 +164,18 @@ doc *parse_value(char **string){
             value_cpy[value_len] = '\0';
 
             if(strpbrk(value_cpy, ".eE") != NULL){                                // if value contains decimal or exponencial terms
-                variable = calloc(1, sizeof(rational_number_t));
-                rational_number_t *variable_number_rational = (rational_number_t *)variable;
+                variable = calloc(1, sizeof(decimal_doc_type_parse_utils));
+                decimal_doc_type_parse_utils *variable_number_rational = (decimal_doc_type_parse_utils *)variable;
 
-                variable_number_rational->value = strto_rational(value_cpy, NULL);
-                variable_number_rational->header.type = RATIONAL_TYPE;
+                variable_number_rational->value = strto_rational_parse_utils(value_cpy, NULL);
+                variable_number_rational->header.type = decimal_dt_type_parse_utils;
 
             }else{                                                                  // value is integer type
-                variable = calloc(1, sizeof(integer_number_t));
-                integer_number_t *variable_number_integer = (integer_number_t *)variable;
+                variable = calloc(1, sizeof(integer_doc_type_parse_utils));
+                integer_doc_type_parse_utils *variable_number_integer = (integer_doc_type_parse_utils *)variable;
 
-                variable_number_integer->value = strto_integer(value_cpy, NULL);
-                variable_number_integer->header.type = INTEGER_TYPE;
+                variable_number_integer->value = strto_integer_parse_utils(value_cpy, NULL);
+                variable_number_integer->header.type = integer_dt_type_parse_utils;
 
             }
 
@@ -209,7 +189,7 @@ doc *parse_value(char **string){
 }
 
 // recursive function call to create the json
-void stringify(doc *variable, char **base_address, size_t *length){
+static void stringify(doc *variable, char **base_address, size_t *length){
 
     char *value = NULL;
     char *buffer = NULL;
@@ -271,12 +251,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
 
         case dt_double:
             value_len = strlen(variable->name) + 4;
-            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS, sizeof(*value));     
+            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_double *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%.*G", FLOAT_DECIMAL_PLACES, ((doc_double *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%.*G", FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_double *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -285,12 +265,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
             
         case dt_float:
             value_len = strlen(variable->name) + 4;
-            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS, sizeof(*value));     
+            value = calloc(value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, sizeof(*value));     
             
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%.*G", variable->name, FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_float *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%.*G", FLOAT_DECIMAL_PLACES, ((doc_float *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%.*G", FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_float *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -299,12 +279,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
 
         case dt_int:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%i", variable->name, ((doc_int *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -313,12 +293,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int8:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%i", variable->name, ((doc_int8_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int8_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -327,12 +307,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int16:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%i", variable->name, ((doc_int16_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int16_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -341,12 +321,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int32:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
             
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%i", variable->name, ((doc_int32_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int32_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -355,12 +335,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_int64:        
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%i", variable->name, ((doc_int64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%i", variable->name, ((doc_int64_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%i", ((doc_int64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int64_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -369,12 +349,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%u", variable->name, ((doc_uint_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -383,12 +363,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint8:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%u", variable->name, ((doc_uint8_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint8_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint8_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -397,12 +377,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint16:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%u", variable->name, ((doc_uint16_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint16_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint16_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -411,12 +391,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint32:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%u", variable->name, ((doc_uint32_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint32_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint32_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -425,12 +405,12 @@ void stringify(doc *variable, char **base_address, size_t *length){
  
         case dt_uint64:
             value_len = strlen(variable->name) + 4;
-            value = calloc(UINT64_MAX_DECIMAL_CHARS + value_len, sizeof(*value));     
+            value = calloc(UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + value_len, sizeof(*value));     
 
             if(variable->name[0] != '\0')
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "\"%s\":%u", variable->name, ((doc_uint64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "\"%s\":%u", variable->name, ((doc_uint64_t *)(variable))->value);
             else
-                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS, "%u", ((doc_uint64_t *)(variable))->value);
+                snprintf(value, value_len + FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint64_t *)(variable))->value);
 
             *length += strlen(value);
             *base_address = realloc(*base_address, *length);
@@ -505,6 +485,21 @@ void stringify(doc *variable, char **base_address, size_t *length){
 }
 
 /* ----------------------------------------- Functions -------------------------------------- */
+
+// opens and parse a json file to a doc structure
+doc *doc_json_open(char *filename){
+    if(filename == NULL){
+        return NULL;
+    }
+
+    char *stream = fstream(filename);
+
+    doc *json = doc_json_parse(stream);
+
+    free(stream);
+
+    return json;
+}
 
 // parse json
 doc *doc_json_parse(char *file_stream){

@@ -1,15 +1,9 @@
 Important: 
 
-- Error handling inside parsers and stringifiers
-
-- numeric values interpretation on xml parser
+- Error handling inside parsers and stringifiers and refactoring to prevent segfaults
 
 Features :
 
-- Parser and stringifier for .ini files 
-
-- Data serialization
+- Data serialization (binary)
 
 - Data compression
-
-- Verify how c keywords inside variable arguents functions behave

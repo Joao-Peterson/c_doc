@@ -48,6 +48,15 @@ int main(int argc, char **argv){
                 dt_uint8, 253,
             ";",
             "string", dt_string, "hello_world", 12ULL,
+            "1", dt_int64, -256,
+            "objs", dt_array,
+                dt_obj, 
+                    "atb", dt_bool, true,
+                ";",
+                dt_obj, 
+                    "atb", dt_bool, false,
+                ";",
+            ";",
         ";"
     ); 
 
@@ -202,8 +211,29 @@ int main(int argc, char **argv){
         log("[OK]\n");
     }
 
+    // check doc_get on numeric names
+    int64_t one = doc_get(obj, "1", int64_t);
+    if(one){
+        log("[OK] Value 1 : %i\n", one);
+        log("[OK]\n");
+    }
+    else{
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+        log("[ERROR] Value 1 : %i\n", one);
+    }
+
+    // check get member on array index
+    bool check_bool = doc_get(obj, "objs[1].atb", bool);
+    if(!check_bool){
+        log("[OK] Error_check: %s\n",doc_get_error_msg());
+        log("[OK] Bool: %s\n", check_bool ? "true" : "false");
+    }
+    else{
+        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    }
+
     // check iterator functionality
-    for(doc_ite(cursor, obj)){
+    for(doc_loop(cursor, obj)){
         log("[LOOP] Member loop: %s\n", cursor->name);
     }
 
