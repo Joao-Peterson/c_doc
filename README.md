@@ -392,6 +392,7 @@ A single doc value can be created by using the call `doc_from_string`, where you
 ```
 ```c
     "value", dt_double, 3.140000
+```
 
 ```c
     doc *value = doc_from_string("value", "true");
@@ -447,7 +448,7 @@ This enum has all the errors listed.
 
 While programming maybe you wish to view the data on a structure more visually, by calling `doc_print()` it will print a simple idented syntax to a output of choice, with a function of choice. Calling `doc_set()` or `doc_file_set()` you can specify a standard os custom print call, to a file output, if any. By default calling `doc_print()` will print with `fprintf()` to `stdout`.  
 
-All the calls are inside [doc_print.h](./dist/doc_print.h)
+All the calls are inside [doc_print.h](./dist/doc_print.h).
 
 ### Struct interfaces
 
@@ -613,7 +614,7 @@ This parser supports comments with '#' and ';'.
 Empty variables like this:
 
 ```c
-    value5 =
+    value5=
     value6
 ```
 
@@ -624,7 +625,7 @@ Anonymous variables, by using the curly brackets syntax:
 ```c
     {VAR}
 
-    # empty variables
+    # empty anonymous variable
     {}
 ```
 
@@ -633,7 +634,6 @@ Also, anonymous variables will be stringified to this syntax.
 Break sequence for strings:
 
 ```c
-    # multi line
     cont = aaaaaaa \
     bbbbbbbbbb
 ```
