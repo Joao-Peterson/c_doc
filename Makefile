@@ -12,9 +12,9 @@ L_FLAGS :=
 
 EXE:= main.exe
 
-SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c doc/doc_print.c
+SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c doc/doc_print.c doc/parse_utils.c
 TEST_SOURCE := test.c
-HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h doc/doc_print.h
+HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h doc/doc_print.h doc/parse_utils.h
 
 VERSION := 1.5
 
@@ -52,7 +52,6 @@ build : $(OBJS_BUILD) $(EXE)
 release : C_FLAGS += -O2
 release : $(HEADERS)
 release : clearall $(OBJS_BUILD) dist
-
 
 $(BUILD_DIR)%.o : %.c
 	@mkdir -p $(dir $@)

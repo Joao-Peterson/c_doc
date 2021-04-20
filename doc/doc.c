@@ -21,12 +21,11 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
+#include "parse_utils.h"
 
 /* ----------------------------------------- Private definitions ------------------------------ */
 
 #define ERR_TO_STRUCT(err)  {err, #err} 
-
-/* ----------------------------------------- Private Enum's ----------------------------------- */
 
 /* ----------------------------------------- Private Struct's --------------------------------- */
 
@@ -39,25 +38,25 @@ typedef struct{
 /* ----------------------------------------- Private Globals -------------------------------- */
 
 // dummy instance to receive macros operations, to not generate segfault
-doc_uint64_t dummy_doc_internal = { .value = 0xFFFFFFFFFFFFFFFF, .header = { .name = "dummy", .type = dt_null, .parent = NULL, .child = NULL, .next = NULL, .prev = NULL, } };
-doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
+static doc_uint64_t dummy_doc_internal = { .value = 0xFFFFFFFFFFFFFFFF, .header = { .name = "dummy", .type = dt_null, .parent = NULL, .child = NULL, .next = NULL, .prev = NULL, } };
+static doc *dummy_doc_internal_ptr = (doc*)&dummy_doc_internal;
 
 // ilegal ascii characters on names
-const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,.\\";
+static const char *illegal_chars_doc_name = "\a\b\t\n\v\f\r\"\'()*+,.\\";
 
 // internal error vars, the char * one holds information about the name of instance to be acted on
-errno_doc_code_t errno_doc_code_internal = 0;
-char *errno_msg_doc_internal = NULL;
+static errno_doc_code_t errno_doc_code_internal = 0;
+static char *errno_msg_doc_internal = NULL;
 
 // array to get the value and name of defined errors 
-const errno_doc_t errno_doc_msg_code_array[] = {
+static const errno_doc_t errno_doc_msg_code_array[] = {
     ERR_TO_STRUCT(errno_doc_size_of_string_or_bindata_is_beyond_four_megabytes_Check_if_size_is_of_type_size_t_or_cast_it_to_size_t_first),
     ERR_TO_STRUCT(errno_doc_ok),
     ERR_TO_STRUCT(errno_doc_not_a_type),
     ERR_TO_STRUCT(errno_doc_overflow_quantity_members_or_name_is_too_big),
     ERR_TO_STRUCT(errno_doc_value_not_same_type_as_array),
     ERR_TO_STRUCT(errno_doc_duplicate_names),
-    ERR_TO_STRUCT(errno_doc_null_passed_obj),
+    ERR_TO_STRUCT(errno_doc_null_passed_doc_ptr),
     ERR_TO_STRUCT(errno_doc_value_not_found),
     ERR_TO_STRUCT(errno_doc_name_cointains_illegal_characters_or_missing_semi_colon_terminator),
     ERR_TO_STRUCT(errno_doc_trying_to_add_new_data_to_non_object_or_non_array),
@@ -65,7 +64,8 @@ const errno_doc_t errno_doc_msg_code_array[] = {
     ERR_TO_STRUCT(errno_doc_trying_to_set_value_of_non_value_type_data_type),
     ERR_TO_STRUCT(errno_doc_trying_to_set_string_of_non_string_data_type),
     ERR_TO_STRUCT(errno_doc_trying_to_set_bindata_of_non_bindata_data_type),
-    ERR_TO_STRUCT(errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data)
+    ERR_TO_STRUCT(errno_doc_trying_to_squash_a_doc_structure_to_0__This_is_not_possible_becaue_it_needs_at_least_one_object_to_hold_data),
+    ERR_TO_STRUCT(errno_doc_null_passed_parameter)
 };
 
 /* ----------------------------------------- Private Functions ------------------------------ */
@@ -332,7 +332,7 @@ static doc *parse_doc_syntax(char *name, doc_type_t type, va_list *arg_list){
 static doc *get_variable_ptr(doc *object_or_array, char *path){
     
     if(object_or_array == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal = path;
         return NULL;
     }
@@ -463,6 +463,7 @@ static doc *squash(doc *variable, doc_size_t max_depth, doc_size_t depth){
     }
 }
 
+
 /* ----------------------------------------- Private Macros --------------------------------- */
 
 // macro for type agnostic
@@ -514,7 +515,7 @@ int __doc_get_error_code(void){
 // check object for the for loop iterator macro
 doc *__check_obj_ite_macro(doc *obj){
     if (obj == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         return dummy_doc_internal_ptr;
     }
     else if(obj->type != dt_obj && obj->type != dt_array){
@@ -631,7 +632,7 @@ void doc_add(doc *object_or_array, char *name_to_add_to, char *name, doc_type_t 
 // delete element denoted by 'name'
 void doc_delete(doc *variable, char *name){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal = name;
         return;
     }
@@ -705,7 +706,7 @@ doc* doc_get_ptr(doc* variable, char *name){
 // get array and obj childs amount
 doc_size_t doc_get_size(doc *variable, char *name){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal = NULL;
         return 0;
     }
@@ -784,7 +785,7 @@ doc_size_t doc_get_size(doc *variable, char *name){
 // appends a already made variable to a object or array
 void doc_append(doc *object_or_array, char *name, doc *variable){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return;
     }
@@ -825,7 +826,7 @@ void doc_append(doc *object_or_array, char *name, doc *variable){
 // allocate and copy a variable
 doc *doc_copy(doc *variable, char *name){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return NULL; 
     }
@@ -963,7 +964,7 @@ doc *doc_copy(doc *variable, char *name){
 // rename variable
 void doc_rename(doc *variable, char *name, char *new_name){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return;
     }
@@ -983,7 +984,7 @@ void doc_rename(doc *variable, char *name, char *new_name){
 // squash a variable and its childs by a maximun nesting depth
 void doc_squash(doc *variable, char *name, doc_size_t max_depth){
     if(variable == NULL){
-        errno_doc_code_internal = errno_doc_null_passed_obj;
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
         errno_msg_doc_internal  = variable->name;
         return;
     }
@@ -1014,4 +1015,21 @@ void doc_squash(doc *variable, char *name, doc_size_t max_depth){
             return;
         break;
     }
+}
+
+// create a new automatic doc variable from a string
+doc *doc_from_string(char *name, char *string){
+    if(name == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_parameter;
+        errno_msg_doc_internal = "parameter: name";
+        return NULL;
+    }
+    
+    if(string == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_parameter;
+        errno_msg_doc_internal = "parameter: string";
+        return NULL;
+    }
+    
+    return create_doc_from_string(name, string);
 }

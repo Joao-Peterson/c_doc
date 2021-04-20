@@ -2,7 +2,7 @@
 
 #define type_to_string(doc_type) #doc_type
 
-const char *doc_type_str_array[] = {
+static const char *doc_type_str_array[] = {
     type_to_string(dt_null),
     type_to_string(dt_obj),
     type_to_string(dt_array),
@@ -77,10 +77,10 @@ static void print_variable(doc *variable, size_t level){
         break;
         
         case dt_double:
-            print_wrapper("[%s] (%s): \"%f\"\n", variable->name, doc_type_str_array[variable->type], ((doc_double*)variable)->value);
+            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], 5, ((doc_double*)variable)->value);
         break;
         case dt_float:
-            print_wrapper("[%s] (%s): \"%f\"\n", variable->name, doc_type_str_array[variable->type], ((doc_float*)variable)->value);
+            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], 5, ((doc_float*)variable)->value);
         break;
 
         case dt_bool:
