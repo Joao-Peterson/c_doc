@@ -501,6 +501,18 @@ doc *doc_json_open(char *filename){
     return json;
 }
 
+// save doc json to file
+void doc_json_save(doc *json_doc, char *filename){
+    char *json = doc_json_stringify(json_doc);
+
+    if(json == NULL) return;
+
+    FILE *out = fopen(filename, "w+");
+    fprintf(out, json);
+    fclose(out);
+    free(json);
+}
+
 // parse json
 doc *doc_json_parse(char *file_stream){
     char *cursor = NULL;

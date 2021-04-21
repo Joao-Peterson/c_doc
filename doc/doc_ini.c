@@ -360,6 +360,18 @@ doc *doc_ini_open(char *filename){
     return ini;
 }
 
+// save doc ini to file
+void doc_ini_save(doc *ini_doc, char *filename){
+    char *ini = doc_ini_stringify(ini_doc);
+
+    if(ini == NULL) return;
+
+    FILE *out = fopen(filename, "w+");
+    fprintf(out, ini);
+    fclose(out);
+    free(ini);
+}
+
 // parses a ini/cfg text file into a doc structure 
 doc *doc_ini_parse(char *ini_file_stream){
     if(ini_file_stream == NULL) return NULL;

@@ -240,6 +240,18 @@ static void print_value(doc *variable, char **stream, size_t *length){
 // stringify csv
 static char *stringify(doc *csv_doc, va_list args){
 
+    if(csv_doc == NULL) return NULL;
+    if(csv_doc->type != dt_obj && csv_doc->type != dt_array) return NULL;
+
+    doc_size_t columns = csv_doc->child->childs;
+    for(doc_loop(line, csv_doc)){
+        if(line->childs != columns) return NULL;                                          // check if lines have same number of cells
+
+        for(doc_loop(cell, line)){
+            if(cell->type == dt_obj || cell->type == dt_array)  return NULL;        // check if cell values are not objects or arrays
+        }
+    }
+
     doc_csv_stringify_opt_t options = va_arg(args, doc_csv_stringify_opt_t);
 
     char *stream = (char*)calloc(1, sizeof(char));
@@ -283,20 +295,24 @@ static char *stringify(doc *csv_doc, va_list args){
 
 /* ----------------------------------------- Functions -------------------------------------- */
 
+// save doc csv to file
+void doc_csv_save(doc *csv_doc, char *filename, ...){
+    va_list args;
+    va_start(args, filename);
+
+    char *csv = stringify(csv_doc, args);
+
+    if(csv == NULL) return;
+
+    FILE *out = fopen(filename, "w+");
+    fprintf(out, csv);
+    fclose(out);
+    free(csv);
+    va_end(args);
+}
+
 // makes a csv stream out of a doc data structure 
 char *doc_csv_stringify(doc *csv_doc, ...){
-    if(csv_doc == NULL) return NULL;
-    if(csv_doc->type != dt_obj && csv_doc->type != dt_array) return NULL;
-
-    doc_size_t columns = csv_doc->child->childs;
-    for(doc_loop(line, csv_doc)){
-        if(line->childs != columns) return NULL;                                          // check if lines have same number of cells
-
-        for(doc_loop(cell, line)){
-            if(cell->type == dt_obj || cell->type == dt_array)  return NULL;        // check if cell values are not objects or arrays
-        }
-    }
-
     va_list args;
     va_start(args, csv_doc);
 

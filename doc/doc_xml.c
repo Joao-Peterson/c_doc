@@ -384,3 +384,15 @@ char *doc_xml_stringify(doc *xml_doc){
 
     return xml_stream;
 }
+
+// save doc xml to file
+void doc_xml_save(doc *xml_doc, char *filename){
+    char *xml = doc_xml_stringify(xml_doc);
+
+    if(xml == NULL) return;
+
+    FILE *out = fopen(filename, "w+");
+    fprintf(out, xml);
+    fclose(out);
+    free(xml);
+}

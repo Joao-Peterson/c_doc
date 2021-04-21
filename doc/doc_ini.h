@@ -18,6 +18,14 @@
 doc *doc_ini_open(char *filename);
 
 /**
+ * @brief stringify a ini/cfg structure and save it to a file 
+ * @note see doc_ini_stringify call.
+ * @param ini_doc: ini doc data structure
+ * @param filename: path to the file
+ */
+void doc_ini_save(doc *ini_doc, char *filename);
+
+/**
  * @brief parses a ini/cfg text file into a doc structure
  * @note supports non nesting sections, line break sequence '\', string literals like: "string",
  * simple variables, empty variables like: 'var=' and 'var ' without the '=' sign, anonymous variables, 
