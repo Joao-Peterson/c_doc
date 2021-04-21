@@ -4,6 +4,10 @@ Important:
 
 Features :
 
+- CSV interface
+
+- MySQL interface
+
 - Data serialization (binary)
 
 - Data compression
