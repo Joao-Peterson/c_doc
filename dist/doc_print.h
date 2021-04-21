@@ -1,5 +1,8 @@
 #ifndef _DOC_PRINT_HEADER_
 #define _DOC_PRINT_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include "doc.h"
 #include <stdio.h>
@@ -42,4 +45,7 @@ void doc_print_file_set(doc_fprint_function_t fprint_function_ptr, FILE *f_out);
  */
 void doc_print(doc *variable);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

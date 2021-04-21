@@ -1,5 +1,8 @@
 #ifndef _DOC_XML_HEADER_
 #define _DOC_XML_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,4 +52,7 @@ doc *doc_xml_parse(char *xml_stream);
  */
 char *doc_xml_stringify(doc *xml_doc);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

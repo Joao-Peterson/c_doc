@@ -1,5 +1,8 @@
 #ifndef _DOC_JSON_HEADER_
 #define _DOC_JSON_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -42,4 +45,7 @@ doc *doc_json_parse(char *file_stream);
  */
 char *doc_json_stringify(doc *json_doc);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

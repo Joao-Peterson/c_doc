@@ -1,5 +1,8 @@
 #ifndef _DOC_INI_HEADER_
 #define _DOC_INI_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -54,4 +57,7 @@ doc *doc_ini_parse(char *ini_file_stream);
  */
 char *doc_ini_stringify(doc *doc_ini);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

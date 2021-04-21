@@ -1,5 +1,8 @@
 #ifndef _DOC_CSV_HEADER_
 #define _DOC_CSV_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -77,4 +80,7 @@ doc *doc_csv_parse(char *stream, ...);
  */
 char *doc_csv_stringify(doc *csv_doc, ...);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

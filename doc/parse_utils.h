@@ -1,5 +1,8 @@
 #ifndef _PARSE_UTILS_HEADER_
 #define _PARSE_UTILS_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -76,4 +79,7 @@ char *strbreak_clear(char *string);
 // creates a ASCII stream from a file
 char *fstream(char *filename);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

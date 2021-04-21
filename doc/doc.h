@@ -17,6 +17,9 @@
 
 #ifndef _DOC_HEADER_
 #define _DOC_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -467,4 +470,7 @@ doc *doc_from_string(char *name, char *string);
     iterator != NULL; \
     iterator = iterator->next
 
+#ifdef __cplusplus 
+}
+#endif
 #endif

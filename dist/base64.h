@@ -1,5 +1,8 @@
 #ifndef _BASE64_HEADER_
 #define _BASE64_HEADER_
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdlib.h>
 
@@ -22,4 +25,8 @@ char *base64_encode(void *data, size_t data_len);
  */
 void *base64_decode(char *data, size_t data_len, size_t *output_data_length);
 
+
+#ifdef __cplusplus 
+}
+#endif
 #endif

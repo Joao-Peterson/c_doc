@@ -10,6 +10,10 @@
 
 #if defined(STRUCT_MEMBERS) && defined(STRUCT_NAME)
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 typedef struct{
     #define X(type, member) type member;
     STRUCT_MEMBERS
@@ -62,5 +66,9 @@ void CAT(doc_struct_get_, STRUCT_NAME)(STRUCT_NAME *struct_instance, doc *doc_st
     STRUCT_MEMBERS
     #undef X
 }
+
+#ifdef __cplusplus 
+}
+#endif
 
 #endif
