@@ -1,5 +1,6 @@
 #include "doc_csv.h"
 #include "parse_utils.h"
+#include "../base64/base64.h"
 #include <string.h>
 
 #define CSV_SEPARATORS ",;"
@@ -48,9 +49,13 @@ static char *strtok_csv(char *string, char *delimiters){
 // parse a csv line
 static doc *parse_line(char **stream){
     char *end_l = strpbrk(*stream, "\r\n");
+    bool end_l_null_terminated = false;
 
-    if(end_l == NULL){
+    if(end_l == NULL && **stream == '\0'){
         return NULL;
+    }
+    else if(end_l == NULL && **stream != '\0'){
+        end_l_null_terminated = true;
     }
     else if(**stream == '\0'){
         return NULL;
@@ -72,7 +77,10 @@ static doc *parse_line(char **stream){
         doc_append(line, ".", cell);
     }
 
-    *stream = end_l + 1;
+    if(end_l_null_terminated)
+        *stream = strrchr(*stream, '\0');
+    else
+        *stream = end_l + 1;
 
     return line;
 }
@@ -81,7 +89,7 @@ static doc *parse_line(char **stream){
 static doc *csv_parse(char *stream, va_list args){
     if(stream == NULL) return NULL;
     
-    doc_parse_csv_opt_t options = va_arg(args, doc_parse_csv_opt_t);
+    doc_csv_parse_opt_t options = va_arg(args, doc_csv_parse_opt_t);
 
     doc *csv = doc_new("", dt_obj, ";");
 
@@ -143,7 +151,161 @@ static doc *csv_parse(char *stream, va_list args){
     return csv;
 }
 
+// print to output stream, reallocating it accordingly
+static void printf_stringify(char **string_start_address, size_t *length, size_t buffer_size, char *format, ...){
+    va_list args;
+    va_start(args, format);
+    
+    size_t token_size = buffer_size + strlen(format);
+    char *token = calloc(token_size, sizeof(*token));
+    vsnprintf(token, token_size, format, args);
+
+    *length += strlen(token);
+    *string_start_address = realloc(*string_start_address, *length);
+    strcat(*string_start_address, token);
+
+    free(token);
+    va_end(args);
+}
+
+// print a value
+static void print_value(doc *variable, char **stream, size_t *length){
+    char *buffer;
+    size_t buffer_size;
+    
+    switch(variable->type){
+        case dt_double:
+            printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, decimal_print_format_parse_utils, FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_double*)variable)->value);
+        break;
+        case dt_float:
+            printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, decimal_print_format_parse_utils, FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_float*)variable)->value);
+        break;
+        
+        case dt_uint:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint_t*)variable)->value);
+        break;
+        case dt_uint64:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint64_t*)variable)->value);
+        break;
+        case dt_uint32:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint32_t*)variable)->value);
+        break;
+        case dt_uint16:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint16_t*)variable)->value);
+        break;
+        case dt_uint8:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%u", ((doc_uint8_t*)variable)->value);
+        break;
+        
+        case dt_int:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int*)variable)->value);
+        break;
+        case dt_int64:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int64_t*)variable)->value);
+        break;
+        case dt_int32:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int32_t*)variable)->value);
+        break;
+        case dt_int16:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int16_t*)variable)->value);
+        break;
+        case dt_int8:
+            printf_stringify(stream, length, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS, "%i", ((doc_int8_t*)variable)->value);
+        break;
+
+        case dt_null:
+        break;
+
+        case dt_bool:
+            printf_stringify(stream, length, 5, "%s", (((doc_bool*)variable)->value ? "true" : "false"));
+        break;
+        
+        case dt_string:
+        case dt_const_string:
+            printf_stringify(stream, length, ((doc_string*)variable)->len, "%s", ((doc_string*)variable)->string);
+        break;
+
+        case dt_bindata:
+        case dt_const_bindata:
+            buffer = base64_encode(((doc_bindata*)variable)->data, ((doc_bindata*)variable)->len); 
+            buffer_size = strlen(buffer);
+            
+            printf_stringify(stream, length, buffer_size + 1, "%s", buffer);
+
+            free(buffer);
+        break;
+    }
+}
+
+// stringify csv
+static char *stringify(doc *csv_doc, va_list args){
+
+    doc_csv_stringify_opt_t options = va_arg(args, doc_csv_stringify_opt_t);
+
+    char *stream = (char*)calloc(1, sizeof(char));
+    size_t length = 1;
+
+    if(options & stringify_csv_put_columns_names_in_first_line){
+        if(options & stringify_csv_put_line_name_in_first_column){
+            printf_stringify(&stream, &length, 1, ",");    
+        }
+        
+        for(doc_loop(column, csv_doc->child)){
+            printf_stringify(&stream, &length, strlen(column->name) + 1, "%s", column->name);    
+
+            if(column->next != NULL)
+                printf_stringify(&stream, &length, 1, ",");    
+        }
+
+        if(csv_doc->child->next != NULL)
+            printf_stringify(&stream, &length, 1, "\n");    
+    }
+
+    for(doc_loop(line, csv_doc)){
+        if(options & stringify_csv_put_line_name_in_first_column){
+            printf_stringify(&stream, &length, strlen(line->name) + 1, "%s,", line->name);    
+        }
+
+        for(doc_loop(cell,line)){
+
+            print_value(cell, &stream, &length);
+
+            if(cell->next != NULL)
+                printf_stringify(&stream, &length, 1, ",");    
+        }
+
+        if(line->next != NULL)
+            printf_stringify(&stream, &length, 1, "\n");    
+    }
+
+    return stream;
+}
+
 /* ----------------------------------------- Functions -------------------------------------- */
+
+// makes a csv stream out of a doc data structure 
+char *doc_csv_stringify(doc *csv_doc, ...){
+    if(csv_doc == NULL) return NULL;
+    if(csv_doc->type != dt_obj && csv_doc->type != dt_array) return NULL;
+
+    doc_size_t columns = csv_doc->child->childs;
+    for(doc_loop(line, csv_doc)){
+        if(line->childs != columns) return NULL;                                          // check if lines have same number of cells
+
+        for(doc_loop(cell, line)){
+            if(cell->type == dt_obj || cell->type == dt_array)  return NULL;        // check if cell values are not objects or arrays
+        }
+    }
+
+    va_list args;
+    va_start(args, csv_doc);
+
+    char *csv = stringify(csv_doc, args);
+
+    va_end(args);
+
+    return csv;
+}
 
 // open and parse a csv file by filename
 doc *doc_csv_open(char *filename, ...){

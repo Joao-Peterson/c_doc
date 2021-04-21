@@ -12,11 +12,15 @@ L_FLAGS :=
 
 EXE:= main.exe
 
-SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c doc/doc_csv.c doc/doc_print.c doc/parse_utils.c
 TEST_SOURCE := test_csv.c
-HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h doc/doc_csv.h doc/doc_print.h doc/parse_utils.h
 
-VERSION := 1.5
+SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c 
+SOURCES += doc/doc_csv.c doc/doc_print.c doc/parse_utils.c
+
+HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h 
+HEADERS += doc/doc_csv.h doc/doc_print.h doc/parse_utils.h base64/base64.h
+
+VERSION := 1.6
 
 LIB_NAME := libdoc.a
 DIST_NAME := C_doc_Win_x86_64_$(VERSION).tar.gz

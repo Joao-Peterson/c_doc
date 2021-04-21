@@ -8,7 +8,7 @@ TL;DR: Sources and include files are in [doc](./doc) and [base64](./base64). Use
 to interact, doc_delete() when you're done. Also check out the parser for ease handle of markdown files!
 
 Created by: João Peterson Scheffer - 2021.
-Version: v1.4
+Version: v1.6
 
 ## Table of contents
 * [Compilation](#compilation)

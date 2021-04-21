@@ -214,7 +214,7 @@ static void print_value(doc *variable, char **stream, size_t *length){
         break;
         case dt_float:
             if(*(variable->name) == '\0')
-                printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "{%*.G}\n", FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_float*)variable)->value);
+                printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, "{" decimal_print_format_parse_utils "}\n", FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_float*)variable)->value);
             else
                 printf_stringify(stream, length, FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS + strlen(variable->name), "%s=%*.G\n", variable->name, FLOAT_DECIMAL_PLACES_PARSE_UTILS, ((doc_float*)variable)->value);
         break;
