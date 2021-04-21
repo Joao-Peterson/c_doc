@@ -2,6 +2,7 @@
 
 /* ----------------------------------------- Globals ---------------------------------------- */
 
+const char *NUMBER_ALPHABET         = "0123456789";
 const char *NUMBER_INTEGER_ALPHABET = "0123456789-+";
 const char *NUMBER_DECIMAL_ALPHABET = "0123456789.,eE-+";
 
@@ -68,7 +69,10 @@ size_t strnchr(char *string, char chr){
 bool str_is_number(char *string){
     run_whitespace(&string);
 
-    if( (*string < '0' && *string > '9') && *string != '+' && *string != '-')
+    if(strpbrk(string, NUMBER_ALPHABET) == NULL)                                    // check if there are decimals digits
+        return false;
+
+    if( (*string < '0' && *string > '9') && *string != '+' && *string != '-')       // if start is sign or number
         return false;
 
     if( strnchr(string, '-') > 1 || 
@@ -77,7 +81,7 @@ bool str_is_number(char *string){
         strnchr(string, ',') > 1 ||
         strnchr(string, 'e') > 1 ||
         strnchr(string, 'E') > 1
-    )
+    )                                                                               // if contains more than one adiotional char
         return false;
 
     return true;

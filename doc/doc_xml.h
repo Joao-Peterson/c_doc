@@ -19,6 +19,14 @@
 doc *doc_xml_open(char *filename);
 
 /**
+ * @brief stringify a xml structure and save it to a file 
+ * @note see doc_xml_stringify call.
+ * @param xml_doc: xml doc data structure
+ * @param filename: path to the file
+ */
+void doc_xml_save(doc *xml_doc, char *filename);
+
+/**
  * @brief parse a xml file stream into a doc structure
  * @param xml_stream: the stream of the file in memory
  * @return a doc data structure, where each tag that contains other tags will be a

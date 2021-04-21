@@ -19,6 +19,14 @@
 doc *doc_json_open(char *filename);
 
 /**
+ * @brief stringify a json structure and save it to a file 
+ * @note see doc_json_stringify call.
+ * @param json_doc: json doc data structure
+ * @param filename: path to the file
+ */
+void doc_json_save(doc *json_doc, char *filename);
+
+/**
  * @brief parse a file stream to a 'doc' structure
  * @param file_stream: null terminated file stream
  * @return pointer to 'doc' structure

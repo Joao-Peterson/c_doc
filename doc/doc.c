@@ -348,7 +348,7 @@ static doc *get_variable_ptr(doc *object_or_array, char *path){
     if(cursor == NULL)
         return NULL;
 
-    if(name_cpy[0] == '.'){ name_cpy++; }                                           // jump over optional '.' at the beginning of path
+    if(name_cpy[0] == '.') name_cpy++;                                              // jump over optional '.' at the beginning of path
     char *var_name = name_cpy;
     char *var_name_next = strpbrk(var_name, ".[");
 
@@ -357,7 +357,7 @@ static doc *get_variable_ptr(doc *object_or_array, char *path){
         var_name_next++;                                                            // points to other name
     }
     
-    if(var_name[1] == ']' && (var_name[0] - 48) >= 0 && (var_name[0] - 48) <= 9 ){                        // search by index number
+    if(var_name[1] == ']' && ( var_name[0] >= '0' && var_name[0] <= '9' ) ){        // search by index number
     
         doc_size_t index = strtoull(var_name, NULL, 10);
 
@@ -378,6 +378,9 @@ static doc *get_variable_ptr(doc *object_or_array, char *path){
             free(name_cpy_base);
             return return_ptr;
         }
+    }
+    else if(*var_name == '\0'){                                                     // if name is empty, try again on same variable
+        return get_variable_ptr(object_or_array, var_name_next);
     }
     else{
 
