@@ -2,8 +2,21 @@
 #include "parse_utils.h"
 #include "../base64/base64.h"
 #include <string.h>
+#include <ctype.h>
 
-#define CSV_SEPARATORS ",;"
+/* ----------------------------------------- Private Globals -------------------------------- */
+
+// standard separators to be used when parsing
+static char *csv_parser_separators_default = ",;";
+
+// standard separator to be used when stringifying
+static char csv_stringify_separator_default = ',';
+
+// separator to be used when parsing
+static char *csv_parser_separators = NULL;
+
+// separator to use when stringifying
+static char csv_stringify_separator = ',';
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
@@ -72,7 +85,7 @@ static doc *parse_line(char **stream){
     doc *line = doc_new("", dt_obj, ";");
     doc *cell;
 
-    for(char *token = strtok_csv(*stream, CSV_SEPARATORS); token != NULL; token = strtok_csv(*stream, CSV_SEPARATORS)){
+    for(char *token = strtok_csv(*stream, csv_parser_separators); token != NULL; token = strtok_csv(*stream, csv_parser_separators)){
         cell = create_doc_from_string("", token);
         doc_append(line, ".", cell);
     }
@@ -90,6 +103,22 @@ static doc *csv_parse(char *stream, va_list args){
     if(stream == NULL) return NULL;
     
     doc_csv_parse_opt_t options = va_arg(args, doc_csv_parse_opt_t);
+    if(options > csv_parse_opt_max) options = csv_parse_normal_mode;
+    if(options & csv_parse_use_custom_separator){
+        char separator = va_arg(args, int);
+        if(ispunct(separator) || isblank(separator)){
+            char separator_str[2];
+            separator_str[0] = separator;
+            separator_str[1] = '\0';
+            csv_parser_separators = separator_str;
+        }
+        else{
+            csv_parser_separators = csv_parser_separators_default;
+        }
+    }
+    else{
+        csv_parser_separators = csv_parser_separators_default;
+    }
 
     doc *csv = doc_new("", dt_obj, ";");
 
@@ -98,7 +127,7 @@ static doc *csv_parse(char *stream, va_list args){
     }
 
     switch(options){
-        case parse_csv_first_line_as_names:
+        case csv_parse_first_line_as_names:
             {
                 doc *name_columns = doc_copy(csv, ".[0]");
                 doc_delete(csv, ".[0]");
@@ -118,14 +147,14 @@ static doc *csv_parse(char *stream, va_list args){
             }
         break;
 
-        case parse_csv_first_column_as_names:
+        case csv_parse_first_column_as_names:
             for(doc_loop(line, csv)){
                 doc_rename(line, ".", doc_get(line, "[0]", char*));
                 doc_delete(line, "[0]");                
             }
         break;
 
-        case (parse_csv_first_line_as_names | parse_csv_first_column_as_names):
+        case (csv_parse_first_line_as_names | csv_parse_first_column_as_names):
             {
                 doc *name_columns = doc_copy(csv, "[0]");
                 doc_delete(csv, "[0]");
@@ -243,30 +272,40 @@ static char *stringify(doc *csv_doc, va_list args){
     if(csv_doc == NULL) return NULL;
     if(csv_doc->type != dt_obj && csv_doc->type != dt_array) return NULL;
 
-    doc_size_t columns = csv_doc->child->childs;
     for(doc_loop(line, csv_doc)){
-        if(line->childs != columns) return NULL;                                          // check if lines have same number of cells
-
         for(doc_loop(cell, line)){
             if(cell->type == dt_obj || cell->type == dt_array)  return NULL;        // check if cell values are not objects or arrays
         }
     }
 
     doc_csv_stringify_opt_t options = va_arg(args, doc_csv_stringify_opt_t);
+    if(options > csv_stringify_opt_max) options = csv_stringify_normal_mode;
+    if(options & csv_stringify_use_custom_separator){
+        char separator = va_arg(args, int);
+        if(ispunct(separator) || isblank(separator)){
+            csv_stringify_separator = separator;
+        }
+        else{
+            csv_stringify_separator = csv_stringify_separator_default;
+        }
+    }
+    else{
+        csv_stringify_separator = csv_stringify_separator_default;
+    }
 
     char *stream = (char*)calloc(1, sizeof(char));
     size_t length = 1;
 
-    if(options & stringify_csv_put_columns_names_in_first_line){
-        if(options & stringify_csv_put_line_name_in_first_column){
-            printf_stringify(&stream, &length, 1, ",");    
+    if(options & csv_stringify_put_columns_names_in_first_line){
+        if(options & csv_stringify_put_line_name_in_first_column){
+            printf_stringify(&stream, &length, 1, "%c", csv_stringify_separator);    
         }
         
         for(doc_loop(column, csv_doc->child)){
             printf_stringify(&stream, &length, strlen(column->name) + 1, "%s", column->name);    
 
             if(column->next != NULL)
-                printf_stringify(&stream, &length, 1, ",");    
+                printf_stringify(&stream, &length, 1, "%c", csv_stringify_separator);    
         }
 
         if(csv_doc->child->next != NULL)
@@ -274,7 +313,7 @@ static char *stringify(doc *csv_doc, va_list args){
     }
 
     for(doc_loop(line, csv_doc)){
-        if(options & stringify_csv_put_line_name_in_first_column){
+        if(options & csv_stringify_put_line_name_in_first_column){
             printf_stringify(&stream, &length, strlen(line->name) + 1, "%s,", line->name);    
         }
 
@@ -283,7 +322,7 @@ static char *stringify(doc *csv_doc, va_list args){
             print_value(cell, &stream, &length);
 
             if(cell->next != NULL)
-                printf_stringify(&stream, &length, 1, ",");    
+                printf_stringify(&stream, &length, 1, "%c", csv_stringify_separator);    
         }
 
         if(line->next != NULL)

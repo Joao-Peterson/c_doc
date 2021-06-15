@@ -16,13 +16,15 @@ extern "C" {
 /**
  * @brief enumerator with parse options that can be passed to doc_csv calls.
  * @note you can pass more than one options using the bitwise OR operator, since the
- * options are powers of two, single bits. Ex: (parse_csv_first_line_as_names | parse_csv_first_column_as_names)
+ * options are powers of two, single bits. Ex: (csv_parse_first_line_as_names | csv_parse_first_column_as_names)
  * will execute both function at the same time.
  */
 typedef enum{
-    parse_csv_normal_mode           = 0,                                            /**< Parse file as a simple matrix */
-    parse_csv_first_line_as_names   = (1<<0),                                       /**< Parse first line as the name for the columns */
-    parse_csv_first_column_as_names = (1<<1)                                        /**< Parse first column, first cell in the line, as the name of that line */
+    csv_parse_normal_mode                           = 0,                            /**< Parse file as a simple matrix */
+    csv_parse_first_line_as_names                   = 0x01,                         /**< Parse first line as the name for the columns */
+    csv_parse_first_column_as_names                 = 0x02,                         /**< Parse first column, first cell in the line, as the name of that line */
+    csv_parse_use_custom_separator                  = 0x04,                         /**< Tells the csv parse calls to accept a extra argument with the char to be used as separator */
+    csv_parse_opt_max                               = 0x07                          /**< Maximum number of bitwised arguments */
 }doc_csv_parse_opt_t;
 
 /**
@@ -32,9 +34,11 @@ typedef enum{
  * will execute both function at the same time.
  */
 typedef enum{
-    stringify_csv_normal_mode                       = 0,                            /**< Stringify structure as a simple matrix */
-    stringify_csv_put_line_name_in_first_column     = (1<<0),                       /**< If a line has a name, then put it into the first column of that line */
-    stringify_csv_put_columns_names_in_first_line   = (1<<1)                        /**< If at least one column has a name, insert a first line as the columns names */
+    csv_stringify_normal_mode                       = 0,                            /**< Stringify structure as a simple matrix */
+    csv_stringify_put_line_name_in_first_column     = 0x01,                         /**< If a line has a name, then put it into the first column of that line */
+    csv_stringify_put_columns_names_in_first_line   = 0x02,                         /**< If at least one column has a name, insert a first line as the columns names */
+    csv_stringify_use_custom_separator              = 0x04,                         /**< Tells the csv parse calls to accept a extra argument with the char to be used s */
+    csv_stringify_opt_max                           = 0x07                          /**< Maximum number of bitwised arguments */
 }doc_csv_stringify_opt_t;
 
 /* ----------------------------------------- Functions -------------------------------------- */

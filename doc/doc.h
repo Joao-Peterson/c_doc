@@ -455,7 +455,7 @@ doc *doc_from_string(char *name, char *string);
  */
 #define doc_set(variable, name, type, new_value, ...) \
     if(__check_string_bindata(doc_get_ptr(variable, name))){ \
-        ((doc_bindata*)doc_get_ptr(variable, name))->len = strtoull(#__VA_ARGS__, NULL, 10); \
+        ((doc_bindata*)doc_get_ptr(variable, name))->len = __VA_ARGS__; \
     } \
     *(type*)((void*)__check_obj_is_value(doc_get_ptr(variable,name)) + sizeof(doc)) = new_value
 
