@@ -985,6 +985,70 @@ void doc_rename(doc *variable, char *name, char *new_name){
     variable->name = (char*)mem_alloc_cpy(new_name, char, strlen(new_name) + 1);
 }
 
+// set string pointer and length
+void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len){
+
+    if(obj == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
+        errno_msg_doc_internal  = obj->name;
+        return;
+    }
+
+    doc *variable = get_variable_ptr(obj, name);
+
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_value_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(variable->type != dt_string && variable->type != dt_const_string){
+        errno_doc_code_internal = errno_doc_trying_to_set_string_of_non_string_data_type;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(variable->type != dt_const_string){                                               // deallocates non const string
+        free(((doc_string*)get_variable_ptr(variable,name))->string);
+    }
+
+    ((doc_string*)variable)->string = new_string;         
+    ((doc_string*)variable)->len = new_len; 
+    errno_doc_code_internal = errno_doc_ok;
+}
+
+// set bindata pointer and length
+void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len){
+
+    if(obj == NULL){
+        errno_doc_code_internal = errno_doc_null_passed_doc_ptr;
+        errno_msg_doc_internal  = obj->name;
+        return;
+    }
+
+    doc *variable = get_variable_ptr(obj, name);
+
+    if(variable == NULL){
+        errno_doc_code_internal = errno_doc_value_not_found;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(variable->type != dt_bindata && variable->type != dt_const_bindata){
+        errno_doc_code_internal = errno_doc_trying_to_set_bindata_of_non_bindata_data_type;
+        errno_msg_doc_internal = name;
+        return;
+    }
+
+    if(variable->type != dt_const_bindata){                                              // deallocates non const bindata
+        free(((doc_bindata*)get_variable_ptr(variable,name))->data);
+    }
+
+    ((doc_bindata*)variable)->data = new_data;            
+    ((doc_bindata*)variable)->len = new_len;
+    errno_doc_code_internal = errno_doc_ok;
+}
+
 // squash a variable and its childs by a maximun nesting depth
 void doc_squash(doc *variable, char *name, doc_size_t max_depth){
     if(variable == NULL){

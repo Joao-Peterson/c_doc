@@ -11,20 +11,21 @@ Created by: João Peterson Scheffer - 2021.
 Version: v1.6
 
 ## Table of contents
-* [Compilation](#compilation)
-* [Use](#use)
-* [Syntax](#syntax)
-    * [Value](#values)
-    * [Lists](#lists)
-* [Functions](#functions)
-* [Iteration](#iteration)
-* [Error checking](#error-checking)
-* [Printing](#printing)
-* [Struct interfaces](#struct-interfaces)
-* [Parse and Stringify](#parse-and-stringify)
-    * [JSON](#json)
-    * [XML](#xml)
-    * [INI](#ini)
+- [DOC - The C dynamic object lib!](#doc---the-c-dynamic-object-lib)
+  - [Table of contents](#table-of-contents)
+    - [Compilation](#compilation)
+    - [Use](#use)
+    - [Syntax](#syntax)
+      - [Values](#values)
+      - [Lists](#lists)
+    - [Functions](#functions)
+    - [Iteration](#iteration)
+    - [Error checking](#error-checking)
+    - [Printing](#printing)
+    - [Parse and Stringify](#parse-and-stringify)
+      - [JSON](#json)
+    - [XML](#xml)
+    - [INI](#ini)
 
 ### Compilation
 
@@ -449,47 +450,6 @@ This enum has all the errors listed.
 While programming maybe you wish to view the data on a structure more visually, by calling `doc_print()` it will print a simple idented syntax to a output of choice, with a function of choice. Calling `doc_set()` or `doc_file_set()` you can specify a standard os custom print call, to a file output, if any. By default calling `doc_print()` will print with `fprintf()` to `stdout`.  
 
 All the calls are inside [doc_print.h](./dist/doc_print.h).
-
-### Struct interfaces
-
-An ugly and experimental feature, but sometimes useful, for when you want to quickly add and read data to and from a doc structure from and to a normal struct. Warning, this will only work for the C language types, not user defined with *typedef*, and with non pointer types, as the unary operator will break the preprocessor macros. 
-
-Check it out, you can set two preprocessor symbols with the name and members of your struct, then include the [doc_struct](./dist/doc_struct.h) header file before your code and it will generate the actual struct and calls at compile time.
-
-```c
-    #define STRUCT_NAME struct_ex_t
-    #define STRUCT_MEMBERS \
-        X(int, value1)\
-        X(int, value2)\
-        X(double, value3)
-    #include "doc_struct.h"
-```
-
-Now you can create, read and write to a doc structure from a struct and vice versa using the predefined calls *doc_struct_new_STRUCT_NAME*, *doc_struct_set_STRUCT_NAME* and *doc_struct_get_STRUCT_NAME*.
-
-```c
-    // interfaces with structs
-    struct_ex_t custom_struct = {.value1 = 20, .value2 = 44, .value3 = 69.0};
-
-    doc *struct_doc = doc_struct_new_struct_ex_t(custom_struct);
-
-    double struct_value = doc_get(struct_doc, "value3", double);
-```
-
-```c
-    custom_struct.value3 = 75.0;
-    doc_struct_set_struct_ex_t(custom_struct, struct_doc);
-    struct_value = doc_get(struct_doc, "value3", double);
-    printf("struct value3: %f\n", struct_value); 
-    // struct value3: 75.000000
-```
-
-```c
-    doc_set(struct_doc, "value2", int , 100);
-    doc_struct_get_struct_ex_t(&custom_struct, struct_doc);
-    printf("struct value2: %i\n", custom_struct.value2); 
-    // struct value2: 100.000000
-```
 
 ### Parse and Stringify
 

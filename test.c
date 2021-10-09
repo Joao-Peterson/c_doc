@@ -10,13 +10,6 @@
     #define log(const_format_str, ...)  
 #endif
 
-// #define STRUCT_NAME struct_ex_t
-// #define STRUCT_MEMBERS \
-//     X(int, value1)\
-//     X(int, value2)\
-//     X(double, value3)
-// #include "doc_struct.h"
-
 int main(int argc, char **argv){
 
     // new dynamic object
@@ -47,7 +40,7 @@ int main(int argc, char **argv){
                 dt_uint8, 252,
                 dt_uint8, 253,
             ";",
-            "string", dt_string, "hello_world", 12ULL,
+            "string", dt_const_string, "hello_world", 12ULL,
             "1", dt_int64, -256,
             "objs", dt_array,
                 dt_obj, 
@@ -83,9 +76,17 @@ int main(int argc, char **argv){
     else
         log("[OK]\n");
 
+    // check set_value on a string
+    doc_set_string(obj, "string", "new_string", 11ULL);
+    if(doc_get_size(obj, "string") != 11ULL){
+        log("[ERROR]\n");
+    }
+    else{
+        log("[OK]\n");
+    }
+
     // check set_value on non value obj
     doc_set(obj, "future_value", double, 255.8);
-
     if (doc_error_code == errno_doc_trying_to_set_value_of_non_value_type_data_type)
             log("[OK]\n");
     else

@@ -17,7 +17,7 @@ TEST_SOURCE := test.c
 SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c 
 SOURCES += doc/doc_csv.c doc/doc_print.c doc/parse_utils.c
 
-HEADERS := doc/doc.h doc/doc_struct.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h 
+HEADERS := doc/doc.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h 
 HEADERS += doc/doc_csv.h doc/doc_print.h doc/parse_utils.h base64/base64.h
 
 VERSION := 1.6
