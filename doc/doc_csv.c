@@ -1,6 +1,6 @@
 #include "doc_csv.h"
 #include "parse_utils.h"
-#include "../base64/base64.h"
+#include "base64.h"
 #include <string.h>
 #include <ctype.h>
 

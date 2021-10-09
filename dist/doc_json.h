@@ -10,7 +10,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include "doc.h"
-#include "../base64/base64.h"
+#include "base64.h"
 
 /* ----------------------------------------- Functions -------------------------------------- */
 
