@@ -473,36 +473,6 @@ doc *doc_from_string(char *name, char *string);
  */
 #define doc_set(variable, name, type, new_value) \
     *(type*)((void*)__check_obj_is_value(doc_get_ptr(variable,name)) + sizeof(doc)) = new_value
-    
-/**
- * @brief set string data pointer and string len
-@@ -413,29 +413,29 @@ void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
- * @param obj: pointer to the string instance
- * @return pointer to string
- */
-#define doc_get_string(obj, name) ( (((doc_string*)doc_get_ptr(obj, name))->string) )
-
-/**
- * @brief gets the string len from a doc instance
- * @param obj: pointer to the string instance
- * @return string length
- */
-#define doc_get_string_len(obj, name) (((doc_string*)doc_get_ptr(obj, name))->len)
-
-/**
- * @brief gets the binary data len from a doc instance
- * @param obj: pointer to the data instance
- * @return pointer to binary data
- */
-#define doc_get_bindata(obj, name) (((doc_bindata*)doc_get_ptr(obj, name))->data)
-
-/**
- * @brief gets the binary data len from a doc instance
- * @param obj: pointer to the data instance
- * @return size_t length   
- * @return binary data length
- */
-#define doc_get_bindata_size(obj, name) (((doc_bindata*)doc_get_ptr(obj, name))->len)
 
 /**
  * @brief creates a iterator for a object or array to be used on a for loop

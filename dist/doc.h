@@ -400,6 +400,24 @@ void doc_rename(doc *variable, char *name, char *new_name);
 doc_size_t doc_get_size(doc *variable, char *name);
 
 /**
+ * @brief set string data pointer and string len
+ * @param obj: pointer to existing object
+ * @param name: name of the data inside obj
+ * @param new_string: new string pointer
+ * @param new_len: new string len
+ */
+void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len);
+
+/**
+ * @brief set binary data pointer and its len
+ * @param obj: pointer to existing object
+ * @param name: name of the data inside obj
+ * @param new_data: new data pointer
+ * @param new_len: new data len
+ */
+void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
+
+/**
  * @brief squashes an variable to a maximun nesting depth.
  * @note this will delete any object deepper than the maximum depth,
  * leaving only the non object/arrays variables at the specified depth.
@@ -413,7 +431,7 @@ doc_size_t doc_get_size(doc *variable, char *name);
 void doc_squash(doc *variable, char *name, doc_size_t max_depth);
 
 /**
- * @brief creates a doc varaible based on a string value, this is valid
+ * @brief creates a doc variable based on a string value, this is valid
  * only to variables representation of numbers and actual strings, arrays and
  * objects will be treated as a simple whole string. When a integer value is represented,
  * the type will be a int64_t, decimal numbers will be o type double, a string with "true"
@@ -453,10 +471,7 @@ doc *doc_from_string(char *name, char *string);
  * @param new_value: value to be set
  * @param ...: as optional argument to char* and uint8_t* types, the len should be specified
  */
-#define doc_set(variable, name, type, new_value, ...) \
-    if(__check_string_bindata(doc_get_ptr(variable, name))){ \
-        ((doc_bindata*)doc_get_ptr(variable, name))->len = __VA_ARGS__; \
-    } \
+#define doc_set(variable, name, type, new_value) \
     *(type*)((void*)__check_obj_is_value(doc_get_ptr(variable,name)) + sizeof(doc)) = new_value
 
 /**
@@ -469,6 +484,7 @@ doc *doc_from_string(char *name, char *string);
     doc* iterator = __check_obj_ite_macro(obj_or_array)->child; \
     iterator != NULL; \
     iterator = iterator->next
+
 
 #ifdef __cplusplus 
 }
