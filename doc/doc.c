@@ -672,6 +672,7 @@ void doc_delete(doc *variable, char *name){
         }
         else if(var->parent->child == var){                                         // first element 
             var->parent->child = var->next;
+            var->next->parent = var->parent;
             var->next->prev = NULL;
             var->parent->childs--;
         }

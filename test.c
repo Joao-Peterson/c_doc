@@ -10,12 +10,12 @@
     #define log(const_format_str, ...)  
 #endif
 
-#define STRUCT_NAME struct_ex_t
-#define STRUCT_MEMBERS \
-    X(int, value1)\
-    X(int, value2)\
-    X(double, value3)
-#include "doc_struct.h"
+// #define STRUCT_NAME struct_ex_t
+// #define STRUCT_MEMBERS \
+//     X(int, value1)\
+//     X(int, value2)\
+//     X(double, value3)
+// #include "doc_struct.h"
 
 int main(int argc, char **argv){
 
@@ -85,8 +85,9 @@ int main(int argc, char **argv){
 
     // check set_value on non value obj
     doc_set(obj, "future_value", double, 255.8);
-    if(doc_error_code == errno_doc_trying_to_set_value_of_non_value_type_data_type)
-        log("[OK]\n");
+
+    if (doc_error_code == errno_doc_trying_to_set_value_of_non_value_type_data_type)
+            log("[OK]\n");
     else
         log("[ERROR] Error_check: %s\n",doc_get_error_msg());
 
@@ -238,38 +239,38 @@ int main(int argc, char **argv){
     }
 
     // interfaces with structs
-    struct_ex_t custom_struct = {.value1 = 20, .value2 = 44, .value3 = 69.0};
+    // struct_ex_t custom_struct = {.value1 = 20, .value2 = 44, .value3 = 69.0};
 
-    doc *struct_doc = doc_struct_new_struct_ex_t(custom_struct);    
-    if(doc_error_code)
-        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
-    else{
-        double struct_value = doc_get(struct_doc, "value3", double);
-        log("[OK] Error_check: %s\n",doc_get_error_msg());
-        log("[OK] struct value3: %f\n", struct_value);
-        log("[OK]\n");
-    }
+    // doc *struct_doc = doc_struct_new_struct_ex_t(custom_struct);    
+    // if(doc_error_code)
+    //     log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    // else{
+    //     double struct_value = doc_get(struct_doc, "value3", double);
+    //     log("[OK] Error_check: %s\n",doc_get_error_msg());
+    //     log("[OK] struct value3: %f\n", struct_value);
+    //     log("[OK]\n");
+    // }
 
-    custom_struct.value3 = 75.0;
-    doc_struct_set_struct_ex_t(custom_struct, struct_doc);
-    if(doc_error_code)
-        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
-    else{
-        double struct_value = doc_get(struct_doc, "value3", double);
-        log("[OK] Error_check: %s\n",doc_get_error_msg());
-        log("[OK] struct value3: %f\n", struct_value);
-        log("[OK]\n");
-    }
+    // custom_struct.value3 = 75.0;
+    // doc_struct_set_struct_ex_t(custom_struct, struct_doc);
+    // if(doc_error_code)
+    //     log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    // else{
+    //     double struct_value = doc_get(struct_doc, "value3", double);
+    //     log("[OK] Error_check: %s\n",doc_get_error_msg());
+    //     log("[OK] struct value3: %f\n", struct_value);
+    //     log("[OK]\n");
+    // }
     
 
-    doc_set(struct_doc, "value2", int , 100);
-    doc_struct_get_struct_ex_t(&custom_struct, struct_doc);
-    if(doc_error_code)
-        log("[ERROR] Error_check: %s\n",doc_get_error_msg());
-    else{
-        log("[OK] struct value2: %i\n", custom_struct.value2);
-        log("[OK]\n");
-    }
+    // doc_set(struct_doc, "value2", int , 100);
+    // doc_struct_get_struct_ex_t(&custom_struct, struct_doc);
+    // if(doc_error_code)
+    //     log("[ERROR] Error_check: %s\n",doc_get_error_msg());
+    // else{
+    //     log("[OK] struct value2: %i\n", custom_struct.value2);
+    //     log("[OK]\n");
+    // }
 
     // delete all, but can be any instance
     doc_delete(obj,".");

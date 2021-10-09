@@ -12,7 +12,7 @@ L_FLAGS :=
 
 EXE:= main.exe
 
-TEST_SOURCE := test_csv.c
+TEST_SOURCE := test.c
 
 SOURCES := doc/doc.c base64/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c 
 SOURCES += doc/doc_csv.c doc/doc_print.c doc/parse_utils.c
