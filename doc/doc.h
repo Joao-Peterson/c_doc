@@ -415,7 +415,7 @@ void doc_set_string(doc *obj, char *name, char *new_string, size_t new_len);
  * @param new_data: new data pointer
  * @param new_len: new data len
  */
-void doc_set_bindata(doc *obj, char *name, char *new_data, size_t new_len);
+void doc_set_bindata(doc *obj, char *name, uint8_t *new_data, size_t new_len);
 
 /**
  * @brief squashes an variable to a maximun nesting depth.

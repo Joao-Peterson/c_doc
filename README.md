@@ -23,13 +23,13 @@ Version: v1.6
     - [Error checking](#error-checking)
     - [Printing](#printing)
     - [Parse and Stringify](#parse-and-stringify)
-      - [JSON](#json)
+    - [JSON](#json)
     - [XML](#xml)
     - [INI](#ini)
 
 ### Compilation
 
-Just alter the [Makefile](./Makefile) as needed and run `make release` and the lib should be compiled to the directory [dist](./dist).
+Just alter the [Makefile](./Makefile) as needed, altering the user variables (see the commands at the top of the Makefile), run `make release` and the lib should be compiled to the directory [dist](./dist).
 
 ### Use
 
@@ -261,10 +261,14 @@ To update a value you can call *doc_set*, it also needs a type, and a value with
     doc_set(new_doc, "value", int, 12);
 ```
 
-For strings and binary data, the call expects a extra parameter, the size or len
+For strings and binary data, you must use this syntax, where a extra parameter, the length of the data, is needed: 
 
 ```c
-    doc_set(new_doc, "string", "Setting this string", 20ULL);
+    doc_set_string(new_doc, "string", "Setting this string", 20ULL);
+```
+
+```c
+    doc_set_bindata(new_doc, "some_binary", pointer_to_somedata, 20ULL);
 ```
 
 Be careful with the *doc_get* and *doc_set*, since their use is similar to *va_arg* on variable arguments functions, this calls are bound to error if the types are incorrectly passed. This library implements error checking that can help with some cases, but it will not prevent you, for example, from setting string data onto a int data type, storing the actual address of a char pointer in a integer is valid operation, and you will only see that when you check the integer later on, so be careful.
@@ -460,7 +464,7 @@ Every call to parse and stringify is contained in a header file with the correpo
 All the type implementes here have a common idea, a doc data structure with a single oject inside, this will represent the file,
 so everytime you parse a file, the strucuture will have all the values encapsulated inside a single object with the file type, ex: json, xml, ini. When you want to stringify, the calls expects you to pass a structure with a single object with the values inside, this object can have any name, its only when parsing that it will be given the name of the file type. 
 
-#### JSON
+### JSON
 
 For a json file format, it goes like this:
 

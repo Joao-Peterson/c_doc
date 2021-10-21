@@ -1,5 +1,12 @@
 # ---------------------------------------------------------------
 # https://www.rapidtables.com/code/linux/gcc/gcc-l.html <- how to link libs
+# 
+# Commands:
+# 	build 		: build lib objects and test file for testing 
+# 	release 	: build lib objects, archive and organize the lib files for use in the 'dist/' folder
+# 	dist 		: dist just organizes the lib files for use in the 'dist/' folder
+# 	clear 		: clear compiled executables
+# 	clearall 	: clear compiled objects and lib files in 'build/' and 'dist/' folders as well as executables
 
 CC := gcc
 
@@ -20,10 +27,7 @@ SOURCES += doc/doc_csv.c doc/doc_print.c doc/parse_utils.c
 HEADERS := doc/doc.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h 
 HEADERS += doc/doc_csv.h doc/doc_print.h doc/parse_utils.h doc/base64.h
 
-VERSION := 1.6
-
 LIB_NAME := libdoc.a
-DIST_NAME := C_doc_Win_x86_64_$(VERSION).tar.gz
 
 DIST_DIR := dist/
 BUILD_DIR := build/
@@ -70,11 +74,6 @@ dist : $(OBJS_BUILD)
 
 $(EXE): $(OBJS_BUILD) $(TEST_OBJ)
 	$(CC) $^ -o $@
-
-
-# pack : 
-# 	$(TAR) $(DIST_NAME) 
-
 
 clear : 
 	rm -f $(EXE)

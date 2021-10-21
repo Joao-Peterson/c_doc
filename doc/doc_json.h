@@ -32,7 +32,8 @@ void doc_json_save(doc *json_doc, char *filename);
 /**
  * @brief parse a file stream to a 'doc' structure
  * @param file_stream: null terminated file stream
- * @return pointer to 'doc' structure
+ * @return pointer to 'doc' structure, if json stream is a empty json, a null object type is returned,
+ * if a error is detected, NULL is returned, so check your pointers!
  */
 doc *doc_json_parse(char *file_stream);
 

@@ -1,6 +1,7 @@
 .vscode/
 test/
 build/
+dist/
 
 *.exe
 *.d

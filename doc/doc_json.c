@@ -6,7 +6,7 @@
 #define VALUE_TOKEN_SEQ             ("\"-0123456789.{[tfn")                         // to find any value type, string, array, obj, number, bool or null
 #define VALUE_TOKEN_SEQ_W_SQR_BRK   ("\"-0123456789.{[tfn]")                        // same as above but with closing sqr brk, for anonymous members in arrays
 #define TERMINATORS                 (",}]")                                         // to check end of member, obj or array
-#define WHITE_SPACE                 (" \t\n\r\v\f")                                 // white space chars                                      // to allocate the correct 'doc_*' type
+#define WHITE_SPACE                 (" \t\n\r\v\f")                                 // white space chars
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
@@ -41,9 +41,10 @@ static char *parse_string(char **string){
 static doc *parse_value(char **string){    
     doc *variable = NULL;
     
-    // char *value_begin = strpbrk((*string), ":");
-    
     char *value_begin = strpbrk((*string), VALUE_TOKEN_SEQ);
+
+    if(value_begin == NULL)
+        return NULL;
 
     doc_size_t i = 0;
     char *control = NULL;
@@ -516,17 +517,26 @@ void doc_json_save(doc *json_doc, char *filename){
 // parse json
 doc *doc_json_parse(char *file_stream){
     char *cursor = NULL;
-    doc *null_return = calloc(1, sizeof(*null_return));
-    null_return->type = dt_null;
+    cursor = strpbrk(file_stream, "{");
 
-    cursor = strpbrk(file_stream, "{");                                 
+    if(cursor == NULL)
+        return NULL;
+
     char *end_check = strpbrk(cursor, "\"}");
 
-    if(*end_check == '}')
+    // return empty object if json contains nothing
+    if(*end_check == '}'){
+        doc *null_return = calloc(1, sizeof(*null_return));
+        null_return->type = dt_null;
         return null_return;
+    }
 
     doc *json = parse_value(&cursor);
 
+    if(json == NULL)
+        return NULL;
+
+    // put name
     const char *name = "json";
     size_t name_len = strlen(name);
     json->name = malloc(sizeof(*name)*name_len + 1);
