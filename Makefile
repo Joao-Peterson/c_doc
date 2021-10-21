@@ -21,11 +21,11 @@ EXE:= main.exe
 
 TEST_SOURCE := test.c
 
-SOURCES := doc/doc.c doc/base64.c doc/doc_json.c doc/doc_xml.c doc/doc_ini.c 
-SOURCES += doc/doc_csv.c doc/doc_print.c doc/parse_utils.c
+SOURCES := c_doc/doc.c c_doc/base64.c c_doc/doc_json.c c_doc/doc_xml.c c_doc/doc_ini.c 
+SOURCES += c_doc/doc_csv.c c_doc/doc_print.c c_doc/parse_utils.c
 
-HEADERS := doc/doc.h doc/doc_json.h doc/doc_xml.h doc/doc_ini.h 
-HEADERS += doc/doc_csv.h doc/doc_print.h doc/parse_utils.h doc/base64.h
+HEADERS := c_doc/doc.h c_doc/doc_json.h c_doc/doc_xml.h c_doc/doc_ini.h 
+HEADERS += c_doc/doc_csv.h c_doc/doc_print.h c_doc/parse_utils.h c_doc/base64.h
 
 LIB_NAME := libdoc.a
 

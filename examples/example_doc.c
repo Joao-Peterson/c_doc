@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "doc/doc.h"
+#include "c_doc/doc.h"
 
 int main(int argc, char **argv){
 

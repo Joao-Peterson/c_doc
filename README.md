@@ -4,11 +4,11 @@ This library is made for C and C++ programs and implement a data structure to mi
 present in interpreted languages, parsers can be written to convert files notations such as xml, json, etc, to
 the data structure.
 
-TL;DR: Sources and include files are in [doc](./doc) and [base64](./base64). Use doc_new() to create a new object and _set() and _get() commands
+TL;DR: Sources and include files are in [doc](./c_doc). Use doc_new() to create a new object and _set() and _get() commands
 to interact, doc_delete() when you're done. Also check out the parser for ease handle of markdown files!
 
 Created by: João Peterson Scheffer - 2021.
-Version: v1.6
+Version: v1.7
 
 ## Table of contents
 - [DOC - The C dynamic object lib!](#doc---the-c-dynamic-object-lib)

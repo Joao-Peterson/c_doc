@@ -1,6 +1,6 @@
 Important: 
 
-- test files for tests and the examples
+- Test files for tests and the examples
 
 - Error handling inside parsers and stringifiers and refactoring to prevent segfaults
 

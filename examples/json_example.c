@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "doc/doc.h"
-#include "doc/doc_json.h"
-#include "base64/base64.h"
+#include "c_doc/doc.h"
+#include "c_doc/doc_json.h"
+#include "c_doc/base64.h"
 
 char *read_asci(const char *path){
     FILE *file = fopen(path, "r"); //abre arquivo
