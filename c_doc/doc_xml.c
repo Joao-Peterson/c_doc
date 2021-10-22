@@ -1,5 +1,11 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <string.h>
 #include "doc_xml.h"
 #include "parse_utils.h"
+#include "base64.h"
 
 /* ----------------------------------------- Private functions ------------------------------ */
 

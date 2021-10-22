@@ -4,13 +4,7 @@
 extern "C" {
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <string.h>
 #include "doc.h"
-#include "base64.h"
 
 /* ----------------------------------------- Functions -------------------------------------- */
 

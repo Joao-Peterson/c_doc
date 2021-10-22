@@ -1,5 +1,11 @@
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "doc_json.h"
 #include "parse_utils.h"
+#include "base64.h"
 
 /* ----------------------------------------- Definitions ------------------------------------ */
 

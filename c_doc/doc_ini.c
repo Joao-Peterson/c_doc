@@ -1,5 +1,10 @@
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "doc_ini.h"
 #include "parse_utils.h"
+#include "base64.h"
 
 /* ----------------------------------------- Private Functions ------------------------------ */
 
