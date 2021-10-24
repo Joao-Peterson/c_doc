@@ -7,6 +7,7 @@
 # 	dist 		: dist just organizes the lib files for use in the 'dist/' folder
 # 	clear 		: clear compiled executables
 # 	clearall 	: clear compiled objects and lib files in 'build/' and 'dist/' folders as well as executables
+# 	install  	: installs bianries, includes and libs to the specified "INSTALL_" path variables
 
 CC := gcc
 
@@ -34,7 +35,9 @@ BUILD_DIR := build/
 
 ARCHIVER := ar -rcs
 
-TAR := tar -c -v -z -f
+INSTALL_BIN_DIR := /usr/local/bin
+INSTALL_LIB_DIR := /usr/local/lib
+INSTALL_INC_DIR := /usr/local/include
 
 # ---------------------------------------------------------------
 
@@ -74,6 +77,10 @@ dist : $(OBJS_BUILD)
 
 $(EXE): $(OBJS_BUILD) $(TEST_OBJ)
 	$(CC) $^ -o $@
+
+install :
+	cp -r dist/*.h $(INSTALL_INC_DIR)/
+	cp -r dist/*.a $(INSTALL_LIB_DIR)/
 
 clear : 
 	rm -f $(EXE)
