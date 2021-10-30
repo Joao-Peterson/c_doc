@@ -33,7 +33,7 @@ typedef int64_t integer_type_parse_utils;                                       
 
 
 
-#define FLOAT_DECIMAL_PLACES_PARSE_UTILS    (5)                                     // decimal places after dot on decimals
+#define FLOAT_DECIMAL_PLACES_PARSE_UTILS    (27)                                    // decimal places after dot on decimals
 #define decimal_print_format_parse_utils    "%#.*G"                                 // to print decimal values    
 
 typedef double decimal_type_parse_utils;                                            // type for decimal values

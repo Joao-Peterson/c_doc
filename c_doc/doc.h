@@ -127,7 +127,7 @@ struct doc{
     doc *prev;                              /**< pointer to previous member inside a array or object*/
     doc *child;                             /**< pointer to the first element of this array or object */
     doc *parent;                            /**< pointer to the parent, the instance that define the object or array */
-    doc_size_t childs;                 /**< quantity of childs */
+    doc_size_t childs;                      /**< quantity of childs */
     doc_type_t type;                        /**< type that describes this instance */
     char *name;                             /**< name of the element */
 };
