@@ -78,7 +78,7 @@ dist : $(OBJS_BUILD)
 $(EXE): $(OBJS_BUILD) $(TEST_OBJ)
 	$(CC) $^ -o $@
 
-install : release
+install :
 	cp -r dist/*.h $(INSTALL_INC_DIR)/
 	cp -r dist/*.a $(INSTALL_LIB_DIR)/
 
