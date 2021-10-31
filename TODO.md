@@ -4,6 +4,8 @@ Important:
 
 - Error handling inside parsers and stringifiers and refactoring to prevent segfaults
 
+- Check files on doc_PARSER_save calls
+
 Features (maybe, just ideas):
 
 - MySQL interface

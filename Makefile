@@ -7,7 +7,7 @@
 # 	dist 		: dist just organizes the lib files for use in the 'dist/' folder
 # 	clear 		: clear compiled executables
 # 	clearall 	: clear compiled objects and lib files in 'build/' and 'dist/' folders as well as executables
-# 	install  	: installs bianries, includes and libs to the specified "INSTALL_" path variables
+# 	install  	: installs binaries, includes and libs to the specified "INSTALL_" path variables
 
 CC := gcc
 
@@ -78,7 +78,7 @@ dist : $(OBJS_BUILD)
 $(EXE): $(OBJS_BUILD) $(TEST_OBJ)
 	$(CC) $^ -o $@
 
-install :
+install : release
 	cp -r dist/*.h $(INSTALL_INC_DIR)/
 	cp -r dist/*.a $(INSTALL_LIB_DIR)/
 
