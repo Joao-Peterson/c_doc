@@ -1,5 +1,6 @@
 #include "doc_csv.h"
 #include "parse_utils.h"
+#include "doc_print.h"
 #include "base64.h"
 #include <string.h>
 #include <ctype.h>
@@ -99,10 +100,9 @@ static doc *parse_line(char **stream){
 }
 
 // parse a csv file
-static doc *csv_parse(char *stream, va_list args){
-    if(stream == NULL) return NULL;
+static doc *csv_parse(char *stream, doc_csv_parse_opt_t options, va_list args){
+    if(stream == NULL || options > csv_parse_opt_max) return NULL;
     
-    doc_csv_parse_opt_t options = va_arg(args, doc_csv_parse_opt_t);
     if(options > csv_parse_opt_max) options = csv_parse_normal_mode;
     if(options & csv_parse_use_custom_separator){
         char separator = va_arg(args, int);
@@ -136,9 +136,27 @@ static doc *csv_parse(char *stream, va_list args){
                     doc_size_t i = 0;
                     for(doc_loop(cell, line)){
                         // [%u]\0
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
+                        doc_print(line);
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
+                        doc_print(cell);
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
+                        doc_print(name_columns);
+                        
+
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
                         char name_pos[UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + 3];
                         snprintf(name_pos, UINT64_MAX_DECIMAL_CHARS_PARSE_UTILS + 3, "[%u]", i);
                         char *column_name = doc_get(name_columns, name_pos, char*);
+
+
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
+                        doc_print(line);
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
+                        doc_print(cell);
+                        printf("[%s.%i] [DEBUG]  \n", __FILE__, __LINE__);
+                        doc_print(name_columns);
+
                         doc_rename(cell, ".", column_name);
 
                         i++;
@@ -363,16 +381,16 @@ char *doc_csv_stringify(doc *csv_doc, ...){
 }
 
 // open and parse a csv file by filename
-doc *doc_csv_open(char *filename, ...){
+doc *doc_csv_open(char *filename, doc_csv_parse_opt_t options, ...){
     if(filename == NULL) return NULL;
 
     va_list args;
-    va_start(args, filename);
+    va_start(args, options);
 
     char *file = fstream(filename);
     if(file == NULL) return NULL;
     
-    doc *variable = csv_parse(file, args);
+    doc *variable = csv_parse(file, options, args);
 
     free(file);
     va_end(args);
@@ -381,11 +399,11 @@ doc *doc_csv_open(char *filename, ...){
 }
 
 // parse a csv file to a doc structure
-doc *doc_csv_parse(char *stream, ...){
+doc *doc_csv_parse(char *stream, doc_csv_parse_opt_t options, ...){
     va_list args;
-    va_start(args, stream);
+    va_start(args, options);
 
-    doc *csv = csv_parse(stream, args);
+    doc *csv = csv_parse(stream, options, args);
 
     va_end(args);
 

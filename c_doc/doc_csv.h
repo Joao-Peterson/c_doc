@@ -51,7 +51,7 @@ typedef enum{
  * @param ...: optional parameter of type doc_csv_parse_opt_t
  * @return a doc data structure
  */
-doc *doc_csv_open(char *filename, ...);
+doc *doc_csv_open(char *filename, doc_csv_parse_opt_t options, ...);
 
 /**
  * @brief stringify a doc structure and save it to a file 
@@ -73,7 +73,7 @@ void doc_csv_save(doc *csv_doc, char *filename, ...);
  * @param ...: optional parameter, of type doc_csv_parse_opt_t
  * @return a doc data structure
  */
-doc *doc_csv_parse(char *stream, ...);
+doc *doc_csv_parse(char *stream, doc_csv_parse_opt_t options, ...);
 
 /**
  * @brief stringify a doc data structure to a csv file stream.

@@ -1,4 +1,5 @@
 #include "doc_print.h"
+#include "parse_utils.h"
 
 #define type_to_string(doc_type) #doc_type
 
@@ -77,10 +78,10 @@ static void print_variable(doc *variable, size_t level){
         break;
         
         case dt_double:
-            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], 5, ((doc_double*)variable)->value);
+            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, ((doc_double*)variable)->value);
         break;
         case dt_float:
-            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], 5, ((doc_float*)variable)->value);
+            print_wrapper("[%s] (%s): \"%#.*G\"\n", variable->name, doc_type_str_array[variable->type], FLOAT_MAX_DECIMAL_CHARS_PARSE_UTILS, ((doc_float*)variable)->value);
         break;
 
         case dt_bool:
